@@ -1,13 +1,16 @@
 #pragma once
 
+#include <iostream>
 #include <algorithm>
-#include <vector>
 #include <string>
 #include <fstream>
+
 #include "DataBase.hpp"
 
 class ConsoleHandler
 {
+#include "typedefs.ipp"
+
 	std::fstream file;
 	std::string command;
 	DataBase* db;
@@ -20,11 +23,16 @@ public:
 private:
 	void create_table();
 	void drop_table();
-	void list_tables();
-	void table_info();
+	void list_tables() const;
+	void table_info() const;
 
-	void create_table_wrap();
+	void insert();
+	void remove();
+	void select();
 
 	void tolower(std::string& word);
+
+	bool createTableHelper();
+	bool insertIntoHelper();
 };
 
