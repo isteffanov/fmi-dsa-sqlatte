@@ -29,11 +29,11 @@ size_t Record::data() const
 	return total;
 }
 
-void Record::print() const
+void Record::print(const std::vector<size_t>& cols) const
 {
 	std::cout << "|" << id << "|";
-	for (const std::string& elem : row)
-		std::cout << elem << "|";
+	for (size_t i : cols)
+		std::cout << row[i] << "|";
 	std::cout << std::endl;
 }
 

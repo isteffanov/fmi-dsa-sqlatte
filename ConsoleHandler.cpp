@@ -19,8 +19,8 @@ void ConsoleHandler::begin()
 		else if (command == "list_tables")	list_tables();
 		else if (command == "table_info")	table_info();
 		else if (command == "insert_into")	insert();
-		else if (command == "remove_from")	remove();
-		else if (command == "select_from") 	select();
+		else if (command == "remove")	remove();
+		else if (command == "select") 	select();
 
 	} while (command != "quit");
 }
@@ -71,9 +71,17 @@ void ConsoleHandler::table_info() const
 
 void ConsoleHandler::insert()
 {
-	if (!insertIntoHelper()) {
-		//TODO
+	std::string table;
+	std::cin >> table;
+
+	std::list<table_row> rows;
+	if (!insertIntoHelper(rows)) {
+		std::cerr << "Wrong format! Please check the schema!" << std::endl;
+		return;
 	}
+
+	for (const table_row& row : rows)
+		db->insert(table, row);
 }
 
 void ConsoleHandler::remove()
@@ -94,18 +102,10 @@ void ConsoleHandler::remove()
 
 void ConsoleHandler::select()
 {
-	std::string table, where;
-	std::cin >> table;
-
-	std::cin >> where;
-	if (where == "where") {
-
-		std::string query;
-		std::getline(std::cin, query);
-		tolower(query);
-
-		db->select(table, query);
-	}
+	if (!selectHelper()) {
+		std::cerr << "Wrong input format!" << std::endl;
+		std::cin.clear();
+	}	
 }
 
 bool ConsoleHandler::createTableHelper()
@@ -154,16 +154,114 @@ bool ConsoleHandler::createTableHelper()
 	return true;
 }
 
-bool ConsoleHandler::insertIntoHelper()
+bool ConsoleHandler::selectHelper()
 {
-	std::string table;
-	std::cin >> table;
+	std::string line;
+	std::getline(std::cin, line);
+	tolower(line);
 
+	size_t whereBegin = line.find("where");
+	if (whereBegin == std::string::npos) return false;
+
+	std::string details = line.substr(0, whereBegin);
+	std::string query = line.substr(whereBegin + strlen("where"));
+
+	size_t fromBegin = details.find("from");
+	if (fromBegin == std::string::npos) return false;
+
+	std::string table = details.substr(fromBegin + strlen("from"));
+	removeWhitespace(table);
+	details = details.substr(0, fromBegin);
+
+	bool all = false;
+	std::string cur;
+	std::vector<std::string> cols;
+
+	std::string::iterator it = details.begin();
+
+	while (*it == ' ')
+		++it;
+
+	if (*it == '*') all = true;
+	else {
+
+		while (true) {
+
+			while (it != details.end() && *it == ' ') 
+				++it;
+			
+			while (isLetterOrUnderscore(*it))
+				cur.push_back(*it++);
+
+			cols.push_back(cur);
+			cur.clear();
+
+			while (it != details.end() && *it == ' ') 
+				++it;
+
+			if (it != details.end() && *it == ',') {
+				++it;
+				continue;
+			}
+
+			if (it == details.end() || *it == ' ') break;
+
+			return false;
+		}
+	}
+
+	if (all)	db->selectAll(table, query);
+	else		db->selectSome(table, cols, query);
+}
+
+bool ConsoleHandler::insertIntoHelper(std::list<table_row>& rows)
+{
 	char c;
+	std::string cur_col;
+	table_row cur_row;
 
 	std::cin >> c;
-	if (c != '{') return false;
+	while (c != '}') {
 
+		std::cin >> c;
+		if (c != '(') return false;
+			
+		while (c != ')'){
+
+			std::cin >> c;
+			while (c == '"' || c == '\'' || c == ' ') //skip whitespace and quotes
+				std::cin >> c;
+
+			while (c != ',' && c != ')') {							//read the value
+				cur_col.push_back(c);
+				std::cin >> c;
+			}
+
+			cur_row.push_back(cur_col);
+			cur_col.clear();
+		}
+		
+		rows.push_back(cur_row);
+		cur_row.clear();
+
+		std::cin >> c;				
+	}
+
+	return true;
+}
+
+void ConsoleHandler::removeWhitespace(std::string& str)
+{
+	std::string cpy = str;
+	str.clear();
+
+	for (std::string::iterator it = cpy.begin(); it != cpy.end(); ++it)
+		if (*it != ' ') str.push_back(*it);	
+}
+
+bool ConsoleHandler::isLetterOrUnderscore(char c) const
+{
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
 void ConsoleHandler::tolower(std::string& word)

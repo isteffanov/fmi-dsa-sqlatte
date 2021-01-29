@@ -22,6 +22,6 @@ public:
 //	friend std::istream& operator>>(std::istream& is,		Record& record);
 
 	size_t	data()	const;
-	void	print() const;
+	void	print(const std::vector<size_t>& cols) const;
 };
 

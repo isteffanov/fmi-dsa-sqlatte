@@ -1,5 +1,4 @@
-#include <iostream>
-#include "ConsoleHandler.hpp";
+#include "ConsoleHandler.hpp"
 
 int main()
 {

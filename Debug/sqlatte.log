@@ -1,0 +1,9 @@
+﻿  Table.cpp
+C:\Users\Ivan Stefanov\source\repos\sqlatte\sqlatte\Schema.hpp(23,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Ivan Stefanov\source\repos\sqlatte\sqlatte\Schema.hpp(32,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Ivan Stefanov\source\repos\sqlatte\sqlatte\Schema.hpp(40,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Ivan Stefanov\source\repos\sqlatte\sqlatte\Table.cpp(81,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Ivan Stefanov\source\repos\sqlatte\sqlatte\Table.cpp(105,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Ivan Stefanov\source\repos\sqlatte\sqlatte\Table.cpp(164,20): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Ivan Stefanov\source\repos\sqlatte\sqlatte\Table.cpp(108): warning C4172: returning address of local variable or temporary
+  sqlatte.vcxproj -> C:\Users\Ivan Stefanov\source\repos\sqlatte\Debug\sqlatte.exe

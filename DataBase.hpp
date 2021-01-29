@@ -24,7 +24,8 @@ public:
 
 	void				insert(const std::string& name, const table_row& record);
 	void				remove(const std::string& name, const std::string& query);
-	void				select(const std::string& name, const std::string& query) const;
+	void				selectAll(const std::string& name, const std::string& query) const;
+	void				selectSome(const std::string& name, const table_row& cols, const std::string& query) const;
 	size_t				size_of(const std::string& table);
 
 private:

@@ -32,13 +32,13 @@ void BinaryQueryTree::initRecursive(Node*& root, const std::string& query)
 {
 	size_t pos;
 
-	pos = query.find("and");
+	pos = query.find(" and ");
 	if (pos != std::string::npos) {
 		root = new Node("and", nullptr);
 	}
 	else {
 
-		pos = query.find("or");
+		pos = query.find(" or ");
 		if (pos != std::string::npos) {
 			root = new Node("or", nullptr);
 		}

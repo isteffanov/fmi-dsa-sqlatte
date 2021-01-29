@@ -6,7 +6,7 @@
 
 #include "Schema.hpp"
 #include "Record.hpp"
-#include "BinaryQueryTree.hpp"
+
 
 class Table
 {
@@ -23,7 +23,8 @@ public:
 
 	void				insert(const table_row& record);
 	void				remove(const std::string& query);
-	void				select(const std::string& query);
+	void				selectAll(const std::string& query);
+	void				selectSome(const std::string& query, const table_row& cols);
 
 	std::list<Record>	search(const std::string& lhs, const std::string& operation, const std::string& rhs) const;
 
@@ -36,5 +37,7 @@ private:
 	const std::string&	type(const std::string& col) const;
 	std::list<Record>	searchTableInt(const std::string& lhs, const std::string& operation, int value) const;
 	std::list<Record>	searchTableStr(const std::string& lhs, const std::string& operation, const std::string& value) const;
+
+	std::vector<size_t> findColsToPrint(const table_row& cols) const;
 };
 

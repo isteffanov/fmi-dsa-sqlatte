@@ -58,11 +58,19 @@ void DataBase::remove(const std::string& name, const std::string& query)
 	else std::cerr << "No such table!" << std::endl;
 }
 
-void DataBase::select(const std::string& name, const std::string& query) const
+void DataBase::selectAll(const std::string& name, const std::string& query) const
 {
 	Table* table = find_ptr(name);
 
-	if (table) table->select(query);
+	if (table) table->selectAll(query);
+	else std::cerr << "No such table!" << std::endl;
+}
+
+void DataBase::selectSome(const std::string& name, const table_row& cols, const std::string& query) const
+{
+	Table* table = find_ptr(name);
+
+	if (table) table->selectSome(query, cols);
 	else std::cerr << "No such table!" << std::endl;
 }
 

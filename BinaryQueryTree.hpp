@@ -5,6 +5,7 @@
 #include "Record.hpp"
 #include "Table.hpp"
 
+//class Table;
 class BinaryQueryTree {
 
 private:

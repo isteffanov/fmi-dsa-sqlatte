@@ -33,6 +33,11 @@ private:
 	void tolower(std::string& word);
 
 	bool createTableHelper();
-	bool insertIntoHelper();
+	bool selectHelper();
+	bool insertIntoHelper(std::list<table_row>& rows);
+
+
+	void removeWhitespace(std::string& str);
+	bool isLetterOrUnderscore(char c) const;
 };
 

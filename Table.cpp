@@ -1,10 +1,11 @@
 #include "Table.hpp"
+#include "BinaryQueryTree.hpp"
 
 Table::Table(std::string _name, Schema _schema)
 	:table_name(_name), schema(_schema) {}
 
-Table::Table(std::string _name, table_row types, table_row names)
-	:table_name(_name), schema(Schema(types, names)) {}
+Table::Table(std::string _name, table_row names, table_row types)
+	:table_name(_name), schema(Schema(names, types)) {}
 
 void Table::insert(const table_row& row)
 {
@@ -22,15 +23,36 @@ void Table::remove(const std::string& query)
 	////TODO		
 }
 
-void Table::select(const std::string& query)
+void Table::selectAll(const std::string& query)
 {
-	BinaryQueryTree tree(this);
-	tree.init(query);
+	BinaryQueryTree bq_tree(this);
+	bq_tree.init(query);
 
-	std::list<Record> found = tree.search();
+	std::list<Record> found = bq_tree.search();
+
+	std::cout << "|";
+	for (const type_name_pair& pair : schema.schema)
+		std::cout << pair.name << "|";
 
 	for (const Record& rec : found)
-		rec.print();
+		std::cout << rec;
+	std::cout << std::endl;
+}
+
+void Table::selectSome(const std::string& query, const table_row& cols)
+{
+	BinaryQueryTree bq_tree(this);
+	bq_tree.init(query);
+
+	std::list<Record> found = bq_tree.search();
+	std::vector<size_t> colsToPrint = findColsToPrint(cols);
+	std::cout << "|id|";
+	for (const std::string& col : cols)
+		std::cout << col << "|";
+	std::cout << std::endl;
+
+	for (const Record& rec : found)
+		rec.print(colsToPrint);
 	std::cout << std::endl;
 }
 
@@ -132,6 +154,20 @@ std::list<Record> Table::searchTableStr(const std::string& lhs, const std::strin
 		else if ((op == ">=")	&& entry >= value) rtrn.push_back(rec);
 	}
 
+	return rtrn;
+}
+
+std::vector<size_t> Table::findColsToPrint(const table_row& cols) const
+{
+	std::vector<size_t> rtrn;
+
+	for (int i = 0; i < schema.schema.size(); ++i) 
+		for (const std::string& col : cols)
+			if (schema.schema[i].name == col) {
+				rtrn.push_back(i);
+				break;
+			}
+	
 	return rtrn;
 }
 
