@@ -5,6 +5,11 @@ ConsoleHandler::ConsoleHandler()
 	db = new DataBase();
 }
 
+ConsoleHandler::~ConsoleHandler()
+{
+	delete db;
+}
+
 void ConsoleHandler::begin()
 {
 	do {
@@ -22,6 +27,8 @@ void ConsoleHandler::begin()
 		else if (command == "select") 	select();
 
 	} while (command != "quit");
+
+	
 }
 
 

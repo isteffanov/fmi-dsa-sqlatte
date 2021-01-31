@@ -16,6 +16,7 @@ class ConsoleHandler
 
 public:
 	ConsoleHandler();
+	~ConsoleHandler();
 
 	void begin();
 
