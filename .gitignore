@@ -34,6 +34,7 @@
 /Debug
 sqlatte.vcxproj
 sqlatte.vcxproj.filters
+sqlatte.vcxproj.user
 *.bin
 
 
