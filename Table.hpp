@@ -4,9 +4,9 @@
 #include <list>
 #include <string>
 
-#include "Schema.hpp"
+#include "read_write_helpers.hpp"
 #include "Record.hpp"
-
+#include "Schema.hpp"
 
 class Table
 {
@@ -17,12 +17,12 @@ class Table
 	Schema schema;
 
 public:
-
+	Table();
 	Table(std::string _table_name, Schema _schema);
-	Table(std::string _table_name, table_row types, table_row names);
+	Table(std::string _table_name , table_row types, table_row names);
 
-	void				insert(const table_row& record);
-	void				remove(const std::string& query);
+	const Record		insert(const table_row& record);
+	std::list<Record>	remove(const std::string& query);
 	void				selectAll(const std::string& query);
 	void				selectSome(const std::string& query, const table_row& cols);
 
@@ -39,5 +39,9 @@ private:
 	std::list<Record>	searchTableStr(const std::string& lhs, const std::string& operation, const std::string& value) const;
 
 	std::vector<size_t> findColsToPrint(const table_row& cols) const;
+
+
+	friend std::fstream& operator>>(std::fstream& in, Table*& table);
+	friend std::fstream& operator<<(std::fstream& out, const Table*& table);
 };
 
