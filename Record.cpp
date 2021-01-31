@@ -1,11 +1,15 @@
 #include "Record.hpp"
 
+Record::Record()
+	:id(0), row(std::vector<std::string>()){}
+
 Record::Record(int64_t _id, std::vector<std::string> _row)
 	:id(_id), row(_row) {}
 
-std::string Record::operator[](size_t index) const
+const std::string& Record::operator[](size_t index) const
 {
-	//if ( !(index >= 0 && index < row.size()) ) throw std::exception("Record: Invalid index");
+	if ( !(index >= 0 && index < row.size()) ) 
+		throw std::exception("Record: Invalid index");
 
 	return row[index];
 }
@@ -45,4 +49,26 @@ std::ostream& operator<<(std::ostream& os, const Record& record)
 	os << '\n';
 
 	return os;
+}
+
+std::fstream& operator<<(std::fstream& out, const Record& record)
+{
+	uint64_t id = record.id;
+
+	out.write((const char*)&id, sizeof(uint64_t));
+	write_vector(out, record.row);
+
+	return out;
+}
+
+std::fstream& operator>>(std::fstream& in, Record& record)
+{
+	uint64_t id;
+	std::vector<std::string> row;
+
+	in.read((char*)&id, sizeof(uint64_t));
+	read_vector(in, row);
+
+	record = Record(id, row);
+	return in;
 }
