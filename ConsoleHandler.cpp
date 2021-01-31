@@ -2,7 +2,6 @@
 
 ConsoleHandler::ConsoleHandler()
 {
-	file.open("db.txt");
 	db = new DataBase();
 }
 
@@ -86,17 +85,9 @@ void ConsoleHandler::insert()
 
 void ConsoleHandler::remove()
 {
-	std::string table, where;
-	std::cin >> table;
-
-	std::cin >> where;
-	if (where == "where") {
-
-		std::string query;
-		std::getline(std::cin, query);
-		tolower(query);
-
-		db->remove(table, query);
+	if (!removeHelper()) {
+		std::cerr << "Wrong input format!" << std::endl;
+		std::cin.clear();
 	}
 }
 
@@ -212,6 +203,24 @@ bool ConsoleHandler::selectHelper()
 
 	if (all)	db->selectAll(table, query);
 	else		db->selectSome(table, cols, query);
+}
+
+bool ConsoleHandler::removeHelper()
+{
+	std::string table, where;
+	std::cin >> table;
+
+	std::cin >> where;
+	if (where == "where") {
+
+		std::string query;
+		std::getline(std::cin, query);
+		tolower(query);
+
+		db->remove(table, query);
+	}
+
+	return true;
 }
 
 bool ConsoleHandler::insertIntoHelper(std::list<table_row>& rows)

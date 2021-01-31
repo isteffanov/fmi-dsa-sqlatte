@@ -1,5 +1,3 @@
-
-typedef std::list<Table*>::iterator list_tableptr_it;
-typedef std::list<Record>::iterator list_record_it;
-
-typedef std::vector<std::string> table_row;
+using list_tableptr_it = std::list<Table*>::iterator;
+using list_record_it = std::list<Record>::iterator;
+using table_row = std::vector<std::string>;

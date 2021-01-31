@@ -3,15 +3,14 @@
 #include <iostream>
 #include <algorithm>
 #include <string>
-#include <fstream>
 
 #include "DataBase.hpp"
+
 
 class ConsoleHandler
 {
 #include "typedefs.ipp"
 
-	std::fstream file;
 	std::string command;
 	DataBase* db;
 
@@ -34,6 +33,7 @@ private:
 
 	bool createTableHelper();
 	bool selectHelper();
+	bool removeHelper();
 	bool insertIntoHelper(std::list<table_row>& rows);
 
 

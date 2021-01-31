@@ -7,6 +7,11 @@
 
 struct type_name_pair {
 private:
+	static const std::string INT;
+	static const std::string STRING;
+	static const std::string DATE;
+	static const std::string UNKNOWN;
+
 	static enum class TYPES {
 		INT = 0,
 		DATE,
@@ -28,12 +33,14 @@ public:
 		else f_type = TYPES::INVALID;
 	}
 
+	const type_name_pair& operator=(const type_name_pair& other);
+
 	const std::string& name() const { return f_name; }
 	const std::string& type() const {
-		if (f_type == TYPES::INT)			return "int";
-		else if (f_type == TYPES::DATE)		return "date";
-		else if (f_type == TYPES::STRING)	return "string";
-		else								return "unknown";
+		if (f_type == TYPES::INT)			return INT;
+		else if (f_type == TYPES::DATE)		return DATE;
+		else if (f_type == TYPES::STRING)	return STRING;
+		else								return UNKNOWN;
 	}
 
 };
@@ -45,6 +52,8 @@ public:
 	Schema();
 	Schema(std::vector<type_name_pair> _schema);
 	Schema(std::vector<std::string> names, std::vector<std::string> types);
+	Schema(const Schema& other);
+	const Schema& operator=(const Schema& other);
 
 
 	const size_t						size() const;
@@ -54,7 +63,7 @@ public:
 
  	const type_name_pair& operator[](size_t pos) const;
 
-	friend std::fstream& operator>>(std::fstream& in, Schema& schema);
-	friend std::fstream& operator<<(std::fstream& out, const Schema& schema);
+	friend std::ifstream& operator>>(std::ifstream& in, Schema& schema);
+	friend std::ofstream& operator<<(std::ofstream& out, const Schema& schema);
 
 };

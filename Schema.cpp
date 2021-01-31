@@ -1,5 +1,10 @@
 #include "Schema.hpp"
 
+const std::string type_name_pair::INT = "int";
+const std::string type_name_pair::DATE = "date";
+const std::string type_name_pair::STRING = "string";
+const std::string type_name_pair::UNKNOWN = "unknown";
+
 Schema::Schema()
 	:f_schema(std::vector<type_name_pair>()){}
 
@@ -14,6 +19,29 @@ Schema::Schema(std::vector<std::string> names, std::vector<std::string> types)
 		f_schema.push_back(type_name_pair(names[i], types[i]));
 }
 
+Schema::Schema(const Schema& other)
+{
+	if (this != &other) {
+		this->f_schema.clear();
+		for (const type_name_pair& pair : other.f_schema)
+			this->f_schema.push_back(pair);
+	}
+}
+
+const Schema& Schema::operator=(const Schema& other)
+{
+	if (this != &other) {
+		//this->f_schema.clear();
+		f_schema.resize(other.size());
+		for (int i = 0; i < other.size(); ++i)
+			this->f_schema[i] = other.f_schema[i];
+
+	}
+
+	return *this;
+}
+
+
 const size_t Schema::size() const
 {
 	return f_schema.size();
@@ -26,8 +54,6 @@ const size_t Schema::pos(std::string name) const
 
 	return std::string::npos;
 }
-
-
 
 const std::string& Schema::find_type(std::string col) const
 {
@@ -50,7 +76,7 @@ const type_name_pair& Schema::operator[](size_t index) const
 	return f_schema[index];
 }
 
-std::fstream& operator>>(std::fstream& in, Schema& schema)
+std::ifstream& operator>>(std::ifstream& in, Schema& schema)
 {
 	std::vector<type_name_pair> pairs;
 
@@ -73,7 +99,7 @@ std::fstream& operator>>(std::fstream& in, Schema& schema)
 	return in;
 }
 
-std::fstream& operator<<(std::fstream& out, const Schema& schema)
+std::ofstream& operator<<(std::ofstream& out, const Schema& schema)
 {
 	if (out.good()) {
 		size_t size = schema.size();
@@ -86,4 +112,14 @@ std::fstream& operator<<(std::fstream& out, const Schema& schema)
 	}
 
 	return out;
+}
+
+const type_name_pair& type_name_pair::operator=(const type_name_pair& other)
+{
+	if (this != &other) {
+		this->f_type = other.f_type;
+		this->f_name = other.f_name;
+	}
+
+	return *this;
 }

@@ -18,7 +18,7 @@ class Table
 
 public:
 	Table();
-	Table(std::string _table_name, Schema _schema);
+	Table(std::string _table_name, Schema _schema = Schema());
 	Table(std::string _table_name , table_row types, table_row names);
 
 	const Record		insert(const table_row& record);
@@ -41,7 +41,7 @@ private:
 	std::vector<size_t> findColsToPrint(const table_row& cols) const;
 
 
-	friend std::fstream& operator>>(std::fstream& in, Table*& table);
-	friend std::fstream& operator<<(std::fstream& out, const Table*& table);
+	friend std::ifstream& operator>>(std::ifstream& in, Table*& table);
+	friend std::ofstream& operator<<(std::ofstream& out, const Table*& table);
 };
 

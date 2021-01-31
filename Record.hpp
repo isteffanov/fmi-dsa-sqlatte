@@ -27,7 +27,7 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const	Record& record);
 //	friend std::istream& operator>>(std::istream& is, Record& record);
 
-	friend std::fstream& operator<<(std::fstream& out, const Record& record);
-	friend std::fstream& operator>>(std::fstream& in, Record& record);
+	friend std::ofstream& operator<<(std::ofstream& out, const Record& record);
+	friend std::ifstream& operator>>(std::ifstream& in, Record& record);
 };
 

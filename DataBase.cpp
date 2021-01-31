@@ -1,11 +1,18 @@
 #include "DataBase.hpp"
 
-DataBase::DataBase() {}
+DataBase::DataBase() {
+	database = filemanager.get_tables();
+}
+
+DataBase::~DataBase()
+{
+}
 
 void DataBase::create(const std::string& name, const table_row& names, const table_row& types)
 {
 	Table* newTable = new Table(name, names, types);
 	database.push_back(newTable);
+	filemanager.create_table(newTable);
 }
 
 void DataBase::drop(const std::string& name)
@@ -18,6 +25,7 @@ void DataBase::drop(const std::string& name)
 
 	delete (*table_it);
 	database.erase(table_it);
+	filemanager.remove_table(name);
 	std::cout << "Table dropped!" << std::endl;
 }
 
@@ -47,14 +55,19 @@ void DataBase::insert(const std::string& name, const table_row& record)
 		return;
 	}
 
-	table->insert(record);
+	const Record rec = table->insert(record);
+	filemanager.insert_record(name, rec);
 }
 
 void DataBase::remove(const std::string& name, const std::string& query)
 {
 	Table* table = find_ptr(name);
 
-	if (table) table->remove(query);
+	if (table) {
+		std::list<Record> found = table->remove(query);
+		for (const Record& rec : found)
+			filemanager.remove_record(name, rec);
+	}
 	else std::cerr << "No such table!" << std::endl;
 }
 
@@ -98,4 +111,34 @@ Table* DataBase::find_ptr(const std::string& name) const
 	return nullptr;
 }
 
+std::ifstream& operator>>(std::ifstream& in, DataBase*& db)
+{
+	size_t size;
+	in.read((char*)&size, sizeof(size_t));
 
+	std::string cur;
+	for (int i = 0; i < size; ++i) {
+		read_string(in, cur);
+
+		std::ifstream file(cur);
+		if (file.is_open()) {
+			Table* ptr;
+			file >> ptr;
+			db->database.push_back(ptr);
+
+			file.close();
+		}
+	}
+	return in;
+}
+
+std::ofstream& operator<<(std::ofstream& out, const DataBase*& db)
+{
+	size_t size = db->database.size();
+	out.write((const char*)&size, sizeof(size_t));
+
+	for (const Table* table : db->database)
+		write_string(out, table->name());
+
+	return out;
+}

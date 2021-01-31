@@ -177,15 +177,15 @@ std::vector<size_t> Table::findColsToPrint(const table_row& cols) const
 	return rtrn;
 }
 
-std::fstream& operator>>(std::fstream& in, Table*& table)
+std::ifstream& operator>>(std::ifstream& in, Table*& table)
 {
 	in >> table->schema;
 	read_list(in, table->table);
-
+	
 	return in;
 }
 
-std::fstream& operator<<(std::fstream& out, const Table*& table)
+std::ofstream& operator<<(std::ofstream& out, const Table*& table)
 {
 	out << table->schema;
 	write_list(out, table->table);

@@ -51,7 +51,7 @@ std::ostream& operator<<(std::ostream& os, const Record& record)
 	return os;
 }
 
-std::fstream& operator<<(std::fstream& out, const Record& record)
+std::ofstream& operator<<(std::ofstream& out, const Record& record)
 {
 	uint64_t id = record.id;
 
@@ -61,7 +61,7 @@ std::fstream& operator<<(std::fstream& out, const Record& record)
 	return out;
 }
 
-std::fstream& operator>>(std::fstream& in, Record& record)
+std::ifstream& operator>>(std::ifstream& in, Record& record)
 {
 	uint64_t id;
 	std::vector<std::string> row;
