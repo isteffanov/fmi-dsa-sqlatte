@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <string>
+#include <regex>
 
 #include "DataBase.hpp"
 
@@ -31,6 +32,8 @@ private:
 	void select();
 
 	void tolower(std::string& word);
+	std::string findMatch(std::string& str, std::regex reg);
+	std::vector<std::string> findMatches(std::string& str, std::regex& reg);
 
 	bool createTableHelper();
 	bool selectHelper();

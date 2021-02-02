@@ -185,16 +185,16 @@ bool ConsoleHandler::selectHelper()
 
 		while (true) {
 
-			while (it != details.end() && *it == ' ') 
+			while (it != details.end() && *it == ' ')
 				++it;
-			
+
 			while (isLetterOrUnderscore(*it))
 				cur.push_back(*it++);
 
 			cols.push_back(cur);
 			cur.clear();
 
-			while (it != details.end() && *it == ' ') 
+			while (it != details.end() && *it == ' ')
 				++it;
 
 			if (it != details.end() && *it == ',') {
@@ -214,18 +214,19 @@ bool ConsoleHandler::selectHelper()
 
 bool ConsoleHandler::removeHelper()
 {
-	std::string table, where;
-	std::cin >> table;
+	std::string line;
+	std::getline(std::cin, line);
+	tolower(line);
 
-	std::cin >> where;
-	if (where == "where") {
+	std::regex reg_table("^[ ]*from[ ]+(\\w+)[ ]+where[ ]+[\\w\\s><!=]+");
+	std::regex reg_query("^[ ]*from[ ]+[\\w]+[ ]+where[ ]+([\\w\\s><!=]+)");
 
-		std::string query;
-		std::getline(std::cin, query);
-		tolower(query);
-
-		db->remove(table, query);
-	}
+	std::string table = findMatch(line, reg_table);
+	std::string query = findMatch(line, reg_query);
+	
+	if (table == "" || query == "") return false;
+	db->remove(table, query);
+	
 
 	return true;
 }
@@ -278,6 +279,33 @@ void ConsoleHandler::removeWhitespace(std::string& str)
 bool ConsoleHandler::isLetterOrUnderscore(char c) const
 {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+}
+
+std::string ConsoleHandler::findMatch(std::string& str, std::regex reg) {
+	std::smatch match;
+
+	if (std::regex_search(str, match, reg)) {
+		return match[1];
+	}
+
+	return "";
+}
+
+std::vector<std::string> ConsoleHandler::findMatches(std::string& str, std::regex& reg)
+{
+	std::vector<std::string> rtrn;
+
+	std::smatch match;
+	std::sregex_iterator it(str.begin(), str.end(), reg);
+	std::sregex_iterator end;
+
+	while (it != end) {
+		match = *it;
+		rtrn.push_back(match.str());
+		it++;
+	}
+
+	return rtrn;
 }
 
 void ConsoleHandler::tolower(std::string& word)
