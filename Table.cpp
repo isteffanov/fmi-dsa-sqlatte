@@ -10,21 +10,17 @@ Table::Table(std::string _name, Schema _schema)
 Table::Table(std::string _name, table_row names, table_row types)
 	:table_name(_name), schema(Schema(names, types)) {}
 
+const Schema& Table::getSchema() const
+{
+	return schema;
+}
+
 const Record Table::insert(const table_row& row)
 {
-	uint64_t id = table.size();
-	Record rec = Record(id, row);
+	Record rec = Record(row);
 	table.push_back(rec);
 
 	return rec;
-}
-
-std::list<Record> Table::remove(const std::string& query)
-{
-	BinaryQueryTree bq_tree(this);
-	bq_tree.init(query);
-
-	return bq_tree.search();
 }
 
 void Table::selectAll(const std::string& query)
@@ -51,7 +47,7 @@ void Table::selectSome(const std::string& query, const table_row& cols)
 	std::list<Record> found = bq_tree.search();
 	std::vector<size_t> colsToPrint = findColsToPrint(cols);
 
-	std::cout << "|id|";
+	std::cout << "|";
 	for (const std::string& col : cols)
 		std::cout << col << "|";
 	std::cout << std::endl;
@@ -179,7 +175,6 @@ std::vector<size_t> Table::findColsToPrint(const table_row& cols) const
 
 std::ifstream& operator>>(std::ifstream& in, Table*& table)
 {
-	in >> table->schema;
 	read_list(in, table->table);
 	
 	return in;
@@ -187,7 +182,6 @@ std::ifstream& operator>>(std::ifstream& in, Table*& table)
 
 std::ofstream& operator<<(std::ofstream& out, const Table*& table)
 {
-	out << table->schema;
 	write_list(out, table->table);
 
 	return out;

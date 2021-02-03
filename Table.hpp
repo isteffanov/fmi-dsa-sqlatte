@@ -21,8 +21,9 @@ public:
 	Table(std::string _table_name, Schema _schema = Schema());
 	Table(std::string _table_name , table_row types, table_row names);
 
+	const Schema&		getSchema() const;
+
 	const Record		insert(const table_row& record);
-	std::list<Record>	remove(const std::string& query);
 	void				selectAll(const std::string& query);
 	void				selectSome(const std::string& query, const table_row& cols);
 

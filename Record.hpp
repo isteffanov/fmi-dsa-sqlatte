@@ -9,12 +9,11 @@
 
 class Record
 {
-	int64_t id;
 	std::vector<std::string> row;
 
 public:
 	Record();
-	Record(int64_t _id, std::vector<std::string> _row);
+	Record(std::vector<std::string> _row);
 
 	size_t	data()	const;
 	void	print(const std::vector<size_t>& cols) const;

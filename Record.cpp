@@ -1,10 +1,10 @@
 #include "Record.hpp"
 
 Record::Record()
-	:id(0), row(std::vector<std::string>()){}
+	:row(std::vector<std::string>()){}
 
-Record::Record(int64_t _id, std::vector<std::string> _row)
-	:id(_id), row(_row) {}
+Record::Record(std::vector<std::string> _row)
+	:row(_row) {}
 
 const std::string& Record::operator[](size_t index) const
 {
@@ -16,7 +16,11 @@ const std::string& Record::operator[](size_t index) const
 
 bool Record::operator==(const Record& other) const
 {
-	return id == other.id;
+	if (this->row.size() != other.row.size()) return false;
+	for (int i = 0; i < row.size(); ++i)
+		if (this->row[i] != other.row[i]) return false;
+
+	return true;	
 }
 
 bool Record::operator!=(const Record& other) const
@@ -35,7 +39,7 @@ size_t Record::data() const
 
 void Record::print(const std::vector<size_t>& cols) const
 {
-	std::cout << "|" << id << "|";
+	std::cout << "|";
 	for (size_t i : cols)
 		std::cout << row[i] << "|";
 	std::cout << std::endl;
@@ -53,9 +57,6 @@ std::ostream& operator<<(std::ostream& os, const Record& record)
 
 std::ofstream& operator<<(std::ofstream& out, const Record& record)
 {
-	uint64_t id = record.id;
-
-	out.write((const char*)&id, sizeof(uint64_t));
 	write_vector(out, record.row);
 
 	return out;
@@ -63,12 +64,9 @@ std::ofstream& operator<<(std::ofstream& out, const Record& record)
 
 std::ifstream& operator>>(std::ifstream& in, Record& record)
 {
-	uint64_t id;
 	std::vector<std::string> row;
-
-	in.read((char*)&id, sizeof(uint64_t));
 	read_vector(in, row);
 
-	record = Record(id, row);
+	record = Record(row);
 	return in;
 }
