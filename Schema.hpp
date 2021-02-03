@@ -37,12 +37,18 @@ public:
 
 	const std::string& name() const { return f_name; }
 	const std::string& type() const {
-		if (f_type == TYPES::INT)			return INT;
-		else if (f_type == TYPES::DATE)		return DATE;
-		else if (f_type == TYPES::STRING)	return STRING;
-		else								return UNKNOWN;
+		switch (f_type)
+		{
+		case type_name_pair::TYPES::INT:
+			return INT;
+		case type_name_pair::TYPES::DATE:
+			return DATE;
+		case type_name_pair::TYPES::STRING:
+			return STRING;
+		default:
+			return UNKNOWN;
+		}
 	}
-
 };
 
 class Schema {
@@ -52,16 +58,14 @@ public:
 	Schema();
 	Schema(std::vector<type_name_pair> _schema);
 	Schema(std::vector<std::string> names, std::vector<std::string> types);
-	Schema(const Schema& other);
-	const Schema& operator=(const Schema& other);
 
+ 	const type_name_pair& operator[](size_t pos) const;
 
 	const size_t						size() const;
 	const size_t						pos(std::string name) const;
-	const std::string&					find_type(std::string col) const;
+	const std::vector<bool>				columns(const std::vector<std::string>& names) const;
 	const std::vector<type_name_pair>&  schema() const;
 
- 	const type_name_pair& operator[](size_t pos) const;
 
 	friend std::ifstream& operator>>(std::ifstream& in, Schema& schema);
 	friend std::ofstream& operator<<(std::ofstream& out, const Schema& schema);

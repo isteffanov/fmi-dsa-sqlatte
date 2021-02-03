@@ -19,28 +19,13 @@ Schema::Schema(std::vector<std::string> names, std::vector<std::string> types)
 		f_schema.push_back(type_name_pair(names[i], types[i]));
 }
 
-Schema::Schema(const Schema& other)
+const type_name_pair& Schema::operator[](size_t index) const
 {
-	if (this != &other) {
-		this->f_schema.clear();
-		for (const type_name_pair& pair : other.f_schema)
-			this->f_schema.push_back(pair);
-	}
+	if (!(index >= 0 && index < size()))
+		throw std::exception("Schema: Invalid index!");
+
+	return f_schema[index];
 }
-
-const Schema& Schema::operator=(const Schema& other)
-{
-	if (this != &other) {
-		//this->f_schema.clear();
-		f_schema.resize(other.size());
-		for (int i = 0; i < other.size(); ++i)
-			this->f_schema[i] = other.f_schema[i];
-
-	}
-
-	return *this;
-}
-
 
 const size_t Schema::size() const
 {
@@ -55,25 +40,29 @@ const size_t Schema::pos(std::string name) const
 	return std::string::npos;
 }
 
-const std::string& Schema::find_type(std::string col) const
-{
-	for (int i = 0; i < size(); ++i)
-		if (f_schema[i].name() == col) return f_schema[i].type();
-
-	return "";
-}
-
 const std::vector<type_name_pair>& Schema::schema() const
 {
 	return f_schema;
 }
 
-const type_name_pair& Schema::operator[](size_t index) const
+const std::vector<bool> Schema::columns(const std::vector<std::string>& names) const
 {
-	if ( !(index >= 0 && index < size()) ) 
-		throw std::exception("Schema: Invalid index!");
+	std::vector<bool> rtrn;
+	
+	bool found;
+	for (const type_name_pair& pair : f_schema) {
+		found = false;
+		for (const std::string col : names) {
+			if (pair.name() == col) {
+				found = true;
+				break;
+			}
+		}
 
-	return f_schema[index];
+		rtrn.push_back(found);
+	}
+		
+	return rtrn;
 }
 
 std::ifstream& operator>>(std::ifstream& in, Schema& schema)

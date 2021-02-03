@@ -28,31 +28,20 @@ bool Record::operator!=(const Record& other) const
 	return !(*this == other);
 }
 
-size_t Record::data() const
+void Record::print() const
 {
-	size_t total = 0;
-	for (const std::string& elem : row)
-		total += elem.size();
-
-	return total;
+	std::cout << '|';
+	for (const std::string& entry : row)
+		std::cout << '\t' << entry << '|';
+	std::cout << '\n';
 }
 
-void Record::print(const std::vector<size_t>& cols) const
+void Record::print(const std::vector<bool>& cols) const
 {
 	std::cout << "|";
-	for (size_t i : cols)
-		std::cout << row[i] << "|";
+	for (int i = 0; i < row.size(); ++i)
+		if(cols[i]) std::cout << row[i] << "|";
 	std::cout << std::endl;
-}
-
-std::ostream& operator<<(std::ostream& os, const Record& record)
-{
-	os << '|';
-	for (const std::string& entry : record.row) 
-		os << '\t' << entry << '|';
-	os << '\n';
-
-	return os;
 }
 
 std::ofstream& operator<<(std::ofstream& out, const Record& record)
