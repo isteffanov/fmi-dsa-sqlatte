@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "read_write_helpers.hpp"
+#include "helper.hpp"
 
 struct type_name_pair {
 private:
@@ -27,9 +27,9 @@ public:
 	type_name_pair(std::string _name = "", std::string _type = "")
 		:f_name(_name)
 	{
-		if (_type == "int") f_type = TYPES::INT;
-		else if (_type == "date") f_type = TYPES::DATE;
-		else if (_type == "string") f_type = TYPES::STRING;
+		if (_type == INT) f_type = TYPES::INT;
+		else if (_type == DATE) f_type = TYPES::DATE;
+		else if (_type == STRING) f_type = TYPES::STRING;
 		else f_type = TYPES::INVALID;
 	}
 
@@ -63,6 +63,7 @@ public:
 
 	const size_t						size() const;
 	const size_t						pos(std::string name) const;
+	const bool							date(std::string name) const;
 	const std::vector<bool>				columns(const std::vector<std::string>& names) const;
 	const std::vector<type_name_pair>&  schema() const;
 

@@ -15,14 +15,6 @@ DataBase::~DataBase()
 	in.close();
 }
 
-void DataBase::info(const std::string& name)
-{
-	Table* table = initTable(name);
-	
-	if (table) table->info(size(name));
-	else std::cerr << "No such table!" << std::endl;
-}
-
 void DataBase::list()
 {
 	std::list<Table*> database = get_tables();
@@ -35,62 +27,58 @@ void DataBase::list()
 		std::cout << "\t" << table->name() << std::endl;
 }
 
-bool DataBase::create_table(const std::string& name, const table_row& names, const table_row& types)
+void DataBase::info(const std::string& name)
 {
-	const Table* table = new Table(name, Schema(names, types));
+	Table* table = initTable(name);
+	
+	if (table) table->info(size(name));
+	else std::cerr << "No such table!" << std::endl;
+}
 
-	if(!write_string(out, table->name())) return false;
-
-	if (!(out << table->schema())) return false;
+bool DataBase::create(const std::string& name, const table_row& names, const table_row& types)
+{
+	if(!write_string(out, name)) return false;
+	if (!(out << Schema(names, types)) ) return false;
 
 	save();
 
-	std::string fileName = DB_RELATIVE_PATH + table->name() + ".bin";
-	std::ofstream file = getStreamOUT(fileName); //create the table file
+	std::ofstream file = getStreamOUT(name); //create the table file
+	
+	if (!file.is_open()) return false;
 	file.close();
 
 	return true;
 }
 
-void DataBase::remove_table(const std::string& table)
+bool DataBase::drop(const std::string& table)
 {
-	std::ofstream temp("temp.bin", std::ios::binary);
-
-	std::string toRemove = table + ".bin";
-	if (std::remove(toRemove.c_str())) {						//delete old file
+	std::string toRemove = getTablePath(table);
+	if (std::remove(toRemove.c_str()) != 0) {						
 		std::cerr << "Remove failed!" << std::endl;
-		std::remove("temp.bin");
-		return;
+		return false;
 	}
 
-	size_t len;
-	char* ptr;
-	while (in.read((char*)&len, sizeof(size_t))) {								//move other content to new file
-		ptr = new char[len + 1];
+	std::ofstream temp = getStreamOUT("temp");
 
-		in.read(ptr, len);
-		ptr[len] = '\0';
+	std::string name;
+	Schema schema;
+	while (read_string(in, name) && in >> schema) {
+		if (name == table) continue;
 
-		if (!table.compare(ptr)) {
-			delete[] ptr;
-			continue;
-		}
-
-		temp.write((const char*)&len, sizeof(size_t));
-		temp.write(ptr, len);
-
-		delete[] ptr;
+		write_string(temp, name);
+		temp << schema;
 	}
 
-	std::rename("temp.bin", toRemove.c_str());
+	std::rename("temp", toRemove.c_str());
+	return true;
 }
 
-void DataBase::insert_records(const std::string& table_name, const std::list<Record>& recs)
+bool DataBase::insert(const std::string& table_name, const std::list<Record>& recs)
 {
 	std::ofstream table = getStreamOUT(table_name);
 	if (!table.is_open()) {
 		std::cerr << "No such table!" << std::endl;
-		return;
+		return false;
 	}
 
 	for(const Record& rec: recs)
@@ -121,11 +109,10 @@ void DataBase::remove_records(const std::string& table, std::list<Record>& found
 	from.close();
 	to.close();
 
-	std::string del = DB_RELATIVE_PATH + table + ".bin";
-	std::string tmp = DB_RELATIVE_PATH + "temp.bin";
+	std::string del = getTablePath(table);
+	std::string tmp = getTablePath("temp");
 
-	int res = std::remove(del.c_str());
-	if( res != 0 ){		//delete old file
+	if( std::remove(del.c_str()) != 0 ){		//delete old file
 		std::cerr << "Remove failed!" << strerror(errno) << '\n';
 		std::remove(tmp.c_str());
 		return;
@@ -141,7 +128,7 @@ void DataBase::select(const std::string& table, const std::string query,
 	else selectSome(table, cols, query, distinct, orderBy, asc);
 }
 
-void DataBase::removeQuery(const std::string& tableName, const std::string& query)
+void DataBase::remove(const std::string& tableName, const std::string& query)
 {
 	Table* table = initTable(tableName);
 	if (!table) return;
@@ -180,15 +167,15 @@ void DataBase::selectAll(const std::string& tableName, const std::string& query,
 
 		searched = bq_tree.search();
 		if (distinct) unify(found, searched);
-		else append(found, bq_tree.search());
+		else append(found, searched);
 
 		table->clear();
 	}
 
 	if (!orderBy.empty()) {
 		size_t pos = table->schema().pos(orderBy);
-
-		found.sort(Record::Compare(pos, asc));
+		bool isDate = table->schema().date(orderBy);
+		found.sort(Record::Compare(pos, isDate, asc));
 	}
 
 	std::cout << tableName << std::endl;
@@ -219,7 +206,7 @@ void DataBase::selectSome(const std::string& tableName, const table_row& cols,
 
 		searched = bq_tree.search();
 		if (distinct) unify(found, searched);
-		else append(found, bq_tree.search());
+		else append(found, searched);
 
 		table->clear();
 	}
@@ -236,6 +223,7 @@ void DataBase::selectSome(const std::string& tableName, const table_row& cols,
 
 	tableFile.close();
 	table->reset();
+	delete table;
 
 	save();
 }
@@ -261,7 +249,7 @@ std::list<Table*> DataBase::get_tables()
 
 void DataBase::append(std::list<Record>& to, const std::list<Record>& what)
 {
-	std::copy(what.rbegin(), what.rend(), front_inserter(to));
+	if(!what.empty()) std::copy(what.rbegin(), what.rend(), front_inserter(to));
 }
 
 Table* DataBase::getTable(const std::string& tableName) const
@@ -282,9 +270,9 @@ Table* DataBase::initTable(const std::string& tableName)
 	std::string name;
 	Schema schema;
 	do {
+		if (!in) break;
 		read_string(in, name);
 		in >> schema;
-		if (!in) break;
 	} while (name != tableName);
 
 	if (name != "") return new Table(name, schema);
@@ -301,7 +289,7 @@ void DataBase::save()
 
 uint64_t DataBase::size(const std::string& name) const
 {
-	std::fstream stream((name + ".bin").c_str());
+	std::ifstream stream = getStreamIN(name);
 
 	stream.seekg(0L, SEEK_END);
 	uint64_t ans = stream.tellg();
@@ -329,14 +317,19 @@ void DataBase::printSelected(const std::list<Record>& found, const std::vector<b
 
 std::ifstream DataBase::getStreamIN(const std::string& table) const
 {
-	std::string path = DB_RELATIVE_PATH + table + ".bin";
+	std::string path = getTablePath(table);
 	std::ifstream file(path.c_str(), std::ios::binary);
 	return file;
 }
 
 std::ofstream DataBase::getStreamOUT(const std::string& table) const
 {
-	std::string path = DB_RELATIVE_PATH + table + ".bin";
+	std::string path = getTablePath(table);
 	std::ofstream file(path.c_str(), std::ios::binary | std::ios::app);
 	return file;
+}
+
+std::string DataBase::getTablePath(const std::string& table) const
+{
+	return DB_RELATIVE_PATH + table + ".bin";
 }

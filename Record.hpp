@@ -5,7 +5,8 @@
 #include <exception>
 #include <fstream>
 
-#include "read_write_helpers.hpp"
+#include "Date.hpp"
+#include "helper.hpp"
 
 class Record
 {
@@ -14,17 +15,29 @@ class Record
 public:
 	class Compare {
 		size_t pos;
+		bool isDate;
 		bool asc;
+
 	public:
-		Compare(size_t _pos, bool _asc = true)
-			:pos(_pos), asc(_asc) {}
+		Compare(size_t _pos, bool date, bool _asc = true)
+			:pos(_pos), isDate(date), asc(_asc) {}
 
 		bool operator()(const Record& lhs, const Record& rhs) {
-			if (lhs.row.size() != rhs.row.size())
-				throw std::exception("Cannot compare records of different size!");
+			if (isDate) {
+				Date left(lhs[pos]);
+				Date right(rhs[pos]);
 
-			if (asc) return lhs.row[pos] < rhs.row[pos];
-			else return lhs.row[pos] > rhs.row[pos];
+				if (asc) return left < right;
+				else return left > right;
+			}
+			else {
+				if (lhs.row.size() != rhs.row.size())
+					throw std::exception("Cannot compare records of different size!");
+
+				if (asc) return lhs.row[pos] < rhs.row[pos];
+				else return lhs.row[pos] > rhs.row[pos];
+			}
+			
 		}
 	};
 

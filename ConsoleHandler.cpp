@@ -22,7 +22,7 @@ void ConsoleHandler::begin()
 		else if (command == "drop_table")	drop_table();
 		else if (command == "list_tables")	list_tables();
 		else if (command == "table_info")	table_info();
-		else if (command == "insert_into")	insert();
+		else if (command == "insert")	insert();
 		else if (command == "remove")	remove();
 		else if (command == "select") 	select();
 
@@ -81,16 +81,10 @@ void ConsoleHandler::table_info() const
 
 void ConsoleHandler::insert()
 {
-	std::string table;
-	std::cin >> table;
-
-	std::list<Record> rows;
-	if (!insertIntoHelper(rows)) {
+	if (!(insertIntoHelper())) {
 		std::cerr << "Wrong format!" << std::endl;
 		return;
 	}
-	
-	db->insert(table, rows);
 }
 
 void ConsoleHandler::remove()
@@ -114,51 +108,41 @@ bool ConsoleHandler::createTableHelper()
 	std::string line;
 	std::getline(std::cin, line);
 
-	std::string name = findMatch(line, "^\\s+(\\w+)\\s+");
+	std::string name = findMatch(line, "^\\s*(\\w+)\\s+");
 
-	std::vector<std::string> names = findMatches(line, "\((\\s*\\w+\\s*(?=:))\)");
-	std::vector<std::string> types = findMatches(line, "\(:\\s*(\\w+)\\s*(?=[,)])\\s*\)");
+	std::regex rem("(,)");
+	line = std::regex_replace(line, rem, "");
 
-	for (std::string& type : types)				//escape ':' as the c++ regex lib
-		type = type.substr(type.find(":") + 1); //does not support look behind
+	line = findMatch(line, "\\((.*?)\\)");
 
+	std::vector<std::string> names = findMatches(line, "(\\w+(?=:))");
+	std::vector<std::string> types = findMatches(line, ":\\s*(\\w+)");
+
+	std::regex rem3(":\\s*");
+	for (std::string& type : types)
+		type = std::regex_replace(type, rem3, "");  //i could not escape ":" otherwise
+	
 	return db->create(name, names, types);
 }
 
-bool ConsoleHandler::insertIntoHelper(std::list<Record>& rows)
+bool ConsoleHandler::insertIntoHelper()
 {
-	char c;
-	std::string cur_col;
-	table_row cur_row;
+	std::string line;
+	std::getline(std::cin, line);
 
-	std::cin >> c;
-	while (c != '}') {
+	std::string table = findMatch(line, "^\\s*into\\s+(\\w+)");
+	line = findMatch(line, "\\{(.*?)\\}");
+	std::list<Record> rows;
 
-		std::cin >> c;
-		if (c != '(') return false;
+	std::regex rem2("( [ ]+)");
+	line = std::regex_replace(line, rem2, " ");
 
-		while (c != ')') {
+	std::vector<std::string> entries = findMatches(line, "\((?=[^,])([\\w\\s/',]+)\)");
 
-			std::cin >> c;
-			while (c == '"' || c == '\'' || c == ' ') //skip whitespace and quotes
-				std::cin >> c;
+	for (std::string& entry : entries)
+		rows.push_back(findMatches(entry, "([\\w\\s/]+$|[\\w\\s/]+(?=,))\\s*"));
 
-			while (c != ',' && c != ')') {							//read the value
-				cur_col.push_back(c);
-				std::cin >> c;
-			}
-
-			cur_row.push_back(cur_col);
-			cur_col.clear();
-		}
-
-		rows.push_back(Record(cur_row));
-		cur_row.clear();
-
-		std::cin >> c;
-	}
-
-	return true;
+	return db->insert(table, rows);
 }
 
 bool ConsoleHandler::removeHelper()
@@ -182,8 +166,8 @@ bool ConsoleHandler::selectHelper()
 	
 	std::string dist = findMatch(line, "^\\s*(distinct)");
 	std::string table = findMatch(line, "\\s*from\\s+(\\w+)");
-	std::string query = findMatch(line, "\\s*from\\s+" + table + "\\s+where([\\w\\s!=<>]+)$");
-	std::string order = findMatch(line, "\\s*from\\s+" + table + "[\\w\\s!=<>]*(order\\s+by[\\s\\w]*)$");
+	std::string query = findMatch(line, "\\s*from\\s+" + table + "\\s+where([\\w\\s!=<>/]+)$");
+	std::string order = findMatch(line, "\\s*from\\s+" + table + "\\s+(order\\s+by[\\s\\w]*)$");
 	std::string byWhat = findMatch(order, "\\s*order\\s+by\\s+(\\w+)\\s*(asc|desc)?$");
 	std::string cend = findMatch(order, "\\s*order\\s+by\\s+" + byWhat + "\\s+(asc|desc)$");
 
@@ -192,16 +176,16 @@ bool ConsoleHandler::selectHelper()
 	bool asc = (cend == "asc");
 
 	std::string select;
-	if (distinct)	select = findMatch(line, "\\s*distinct([\\w\\s,]*)from\\s*" + table +
-											"\\s+where\\s*" + query + "\\s*$");
-	else			select = findMatch(line, "([\\w\\s,]*)from\\s*" + table +
-											"\\s+where\\s*" + query + "\\s*$");
+	if (distinct)	select = findMatch(line, "\\s*distinct([\*\\w\\s,]*)from\\s*" + table +
+											"(\\s+where\\s*" + query + ")?\\s*$");
+	else			select = findMatch(line, "\\s*([\*\\w\\s,]*)from\\s*" + table +
+											"(\\s+where\\s*" + query + ")?\\s*");
 
 	if (!order.empty()) query = findMatch(query, "(.*?)" + order + "$");
 	
 	table_row cols = getSelectedColumns(select);
 
-	if (!cols.empty()) {
+	if (!cols.empty() && !byWhat.empty()) {
 		bool found = false;
 		for (const std::string& col : cols)
 			if (col == byWhat) found = true;
@@ -216,6 +200,7 @@ const table_row ConsoleHandler::getSelectedColumns(std::string& select)
 {
 	std::string cur;
 	table_row cols;
+	if (select.empty()) return cols;
 
 	std::string::iterator it = select.begin();
 
@@ -263,34 +248,6 @@ void ConsoleHandler::removeWhitespace(std::string& str)
 bool ConsoleHandler::isLetterOrUnderscore(char c) const
 {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
-}
-
-std::string ConsoleHandler::findMatch(const std::string& str, const std::string& expr) {
-	std::regex reg(expr);
-	std::smatch match;
-
-	if (std::regex_search(str, match, reg)) 
-		return match[1];
-
-	return "";
-}
-
-std::vector<std::string> ConsoleHandler::findMatches(std::string& str, const std::string& expr)
-{
-	std::regex reg(expr);
-	std::vector<std::string> rtrn;
-
-	std::smatch match;
-	std::sregex_iterator it(str.begin(), str.end(), reg);
-	std::sregex_iterator end;
-
-	while (it != end) {
-		match = *it;
-		rtrn.push_back(match.str());
-		it++;
-	}
-
-	return rtrn;
 }
 
 void ConsoleHandler::tolower(std::string& word)

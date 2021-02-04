@@ -40,6 +40,15 @@ const size_t Schema::pos(std::string name) const
 	return std::string::npos;
 }
 
+const bool Schema::date(std::string name) const
+{
+	for (const type_name_pair& pair : f_schema)
+		if (pair.name() == name) 
+			return (pair.type() == "date");
+
+	return false;
+}
+
 const std::vector<type_name_pair>& Schema::schema() const
 {
 	return f_schema;
@@ -112,3 +121,4 @@ const type_name_pair& type_name_pair::operator=(const type_name_pair& other)
 
 	return *this;
 }
+

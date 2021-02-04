@@ -4,10 +4,11 @@
 #include <algorithm>
 #include <string>
 #include <regex>
+#include <vector>
 
 #include "DataBase.hpp"
-
 #include "typedefs.hpp"
+#include "helper.hpp"
 
 class ConsoleHandler
 {
@@ -32,13 +33,10 @@ private:
 	void select();
 
 	void tolower(std::string& word);
-	std::string findMatch(const std::string& str, const std::string& expr);
-	std::vector<std::string> findMatches(std::string& str, const std::string& expr);
-
 	bool createTableHelper();
 	bool selectHelper();
 	bool removeHelper();
-	bool insertIntoHelper(std::list<Record>& rows);
+	bool insertIntoHelper();
 
 	const table_row getSelectedColumns(std::string& select);
 
