@@ -6,9 +6,19 @@ Record::Record()
 Record::Record(std::vector<std::string> _row)
 	:row(_row) {}
 
+const Record& Record::operator=(const Record& other)
+{
+	if (this != &other) {
+		this->row.clear();
+		this->row = other.row;
+	}
+
+	return *this;
+}
+
 const std::string& Record::operator[](size_t index) const
 {
-	if ( !(index >= 0 && index < row.size()) ) 
+	if (!(index >= 0 && index < row.size()))
 		throw std::exception("Record: Invalid index");
 
 	return row[index];
@@ -32,7 +42,7 @@ void Record::print() const
 {
 	std::cout << '|';
 	for (const std::string& entry : row)
-		std::cout << '\t' << entry << '|';
+		std::cout << entry << '\t' << '|';
 	std::cout << '\n';
 }
 
@@ -40,7 +50,7 @@ void Record::print(const std::vector<bool>& cols) const
 {
 	std::cout << "|";
 	for (int i = 0; i < row.size(); ++i)
-		if(cols[i]) std::cout << row[i] << "|";
+		if(cols[i]) std::cout << row[i] << '\t' << "|";
 	std::cout << std::endl;
 }
 
