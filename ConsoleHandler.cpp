@@ -28,7 +28,6 @@ void ConsoleHandler::begin()
 
 	} while (command != "quit");
 
-	
 }
 
 
@@ -53,7 +52,7 @@ void ConsoleHandler::drop_table()
 		tolower(answer);
 
 		if (answer == "yes" || answer == "y") {
-			db->drop(table);
+			db->remove_table(table);
 			break;
 		}
 		else if (answer == "no" || answer == "n") return;
@@ -80,14 +79,14 @@ void ConsoleHandler::insert()
 	std::string table;
 	std::cin >> table;
 
-	std::list<table_row> rows;
+	std::list<Record> rows;
 	if (!insertIntoHelper(rows)) {
 		std::cerr << "Wrong format! Please check the schema!" << std::endl;
 		return;
 	}
 
-	for (const table_row& row : rows)
-		db->insert(table, row);
+	
+	db->insert_records(table, rows);
 }
 
 void ConsoleHandler::remove()
@@ -148,68 +147,44 @@ bool ConsoleHandler::createTableHelper()
 		else cur.insert(cur.end(), c);
 	}
 
-	db->create(name, names, types);
-	return true;
+	return db->create_table(name, names, types);
 }
 
 bool ConsoleHandler::selectHelper()
 {
 	std::string line;
 	std::getline(std::cin, line);
-	tolower(line);
+	
+	std::string dist = runRegex(line, "^\\s*(distinct)");
+	std::string table = runRegex(line, "\\s*from\\s+(\\w+)");
+	std::string query = runRegex(line, "\\s*from\\s+" + table + "\\s+where([\\w\\s!=<>]+)$");
+	std::string order = runRegex(line, "\\s*from\\s+" + table + "[\\w\\s!=<>]*(order\\s+by[\\s\\w]*)$");
+	std::string byWhat = runRegex(order, "\\s*order\\s+by\\s+(\\w+)\\s*(asc|desc)?$");
+	std::string cend = runRegex(order, "\\s*order\\s+by\\s+" + byWhat + "\\s+(asc|desc)$");
 
-	size_t whereBegin = line.find("where");
-	if (whereBegin == std::string::npos) return false;
 
-	std::string details = line.substr(0, whereBegin);
-	std::string query = line.substr(whereBegin + strlen("where"));
+	bool distinct = (!dist.empty());
+	bool asc = (cend == "asc");
 
-	size_t fromBegin = details.find("from");
-	if (fromBegin == std::string::npos) return false;
+	std::string select;
+	if (distinct)	select = runRegex(line, "\\s*distinct([\\w\\s,]*)from\\s*" + table +
+											"\\s+where\\s*" + query + "\\s*$");
+	else			select = runRegex(line, "([\\w\\s,]*)from\\s*" + table +
+											"\\s+where\\s*" + query + "\\s*$");
 
-	std::string table = details.substr(fromBegin + strlen("from"));
-	removeWhitespace(table);
-	details = details.substr(0, fromBegin);
+	if (!order.empty()) query = runRegex(query, "(.*?)" + order + "$");
+	
+	table_row cols = getSelectedColumns(select);
 
-	bool all = false;
-	std::string cur;
-	std::vector<std::string> cols;
+	if (!cols.empty()) {
+		bool found = false;
+		for (const std::string& col : cols)
+			if (col == byWhat) found = true;
 
-	std::string::iterator it = details.begin();
-
-	while (*it == ' ')
-		++it;
-
-	if (*it == '*') all = true;
-	else {
-
-		while (true) {
-
-			while (it != details.end() && *it == ' ')
-				++it;
-
-			while (isLetterOrUnderscore(*it))
-				cur.push_back(*it++);
-
-			cols.push_back(cur);
-			cur.clear();
-
-			while (it != details.end() && *it == ' ')
-				++it;
-
-			if (it != details.end() && *it == ',') {
-				++it;
-				continue;
-			}
-
-			if (it == details.end() || *it == ' ') break;
-
-			return false;
-		}
+		if (!found) return false;
 	}
 
-	if (all)	db->selectAll(table, query);
-	else		db->selectSome(table, cols, query);
+	db->select(table, query, cols, distinct, byWhat, asc);
 }
 
 bool ConsoleHandler::removeHelper()
@@ -225,13 +200,12 @@ bool ConsoleHandler::removeHelper()
 	std::string query = findMatch(line, reg_query);
 	
 	if (table == "" || query == "") return false;
-	db->remove(table, query);
-	
+	db->removeQuery(table, query);
 
 	return true;
 }
 
-bool ConsoleHandler::insertIntoHelper(std::list<table_row>& rows)
+bool ConsoleHandler::insertIntoHelper(std::list<Record>& rows)
 {
 	char c;
 	std::string cur_col;
@@ -258,13 +232,58 @@ bool ConsoleHandler::insertIntoHelper(std::list<table_row>& rows)
 			cur_col.clear();
 		}
 		
-		rows.push_back(cur_row);
+		rows.push_back(Record(cur_row));
 		cur_row.clear();
 
 		std::cin >> c;				
 	}
 
 	return true;
+}
+
+std::string ConsoleHandler::runRegex(const std::string& line, const std::string& expr)
+{
+	std::regex reg(expr, std::regex_constants::icase);
+	return findMatch(line, reg);
+}
+
+const table_row ConsoleHandler::getSelectedColumns(std::string& select)
+{
+	std::string cur;
+	table_row cols;
+
+	std::string::iterator it = select.begin();
+
+	while (*it == ' ')
+		++it;
+
+	if (*it != '*') {
+
+		while (true) {
+
+			while (it != select.end() && *it == ' ')
+				++it;
+
+			while (isLetterOrUnderscore(*it))
+				cur.push_back(*it++);
+
+			cols.push_back(cur);
+			cur.clear();
+
+			while (it != select.end() && *it == ' ')
+				++it;
+
+			if (it != select.end() && *it == ',') {
+				++it;
+				continue;
+			}
+
+			if (it == select.end() || *it == ' ') break;
+			
+		}
+	}
+
+	return cols;
 }
 
 void ConsoleHandler::removeWhitespace(std::string& str)
@@ -281,12 +300,11 @@ bool ConsoleHandler::isLetterOrUnderscore(char c) const
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
-std::string ConsoleHandler::findMatch(std::string& str, std::regex reg) {
+std::string ConsoleHandler::findMatch(const std::string& str, const std::regex& reg) {
 	std::smatch match;
 
-	if (std::regex_search(str, match, reg)) {
+	if (std::regex_search(str, match, reg)) 
 		return match[1];
-	}
 
 	return "";
 }

@@ -41,7 +41,7 @@ bool DataBase::create_table(const std::string& name, const table_row& names, con
 
 	if(!write_string(out, table->name())) return false;
 
-	if (!(out << table->getSchema())) return false;
+	if (!(out << table->schema())) return false;
 
 	save();
 
@@ -134,6 +134,13 @@ void DataBase::remove_records(const std::string& table, std::list<Record>& found
 	std::rename(tmp.c_str(), del.c_str());
 }
 
+void DataBase::select(const std::string& table, const std::string query,
+	const std::vector<std::string> cols, bool distinct , const std::string& orderBy, bool asc)
+{
+	if (cols.empty()) selectAll(table, query, distinct, orderBy, asc);
+	else selectSome(table, cols, query, distinct, orderBy, asc);
+}
+
 void DataBase::removeQuery(const std::string& tableName, const std::string& query)
 {
 	Table* table = initTable(tableName);
@@ -143,7 +150,7 @@ void DataBase::removeQuery(const std::string& tableName, const std::string& quer
 	BinaryQueryTree bq_tree(table);
 	bq_tree.init(query);
 
-	while(table->getContents(tableFile, MAX_ROWS_RETURN)){
+	while(table->read_chunk(tableFile, MAX_ROWS_RETURN)){
 		
 		tableFile.close();
 		std::list<Record> found = bq_tree.search();
@@ -158,37 +165,48 @@ void DataBase::removeQuery(const std::string& tableName, const std::string& quer
 	table->reset();
 }
 
-void DataBase::selectAll(const std::string& tableName, const std::string& query)
+void DataBase::selectAll(const std::string& tableName, const std::string& query, 
+	bool distinct, const std::string& orderBy, bool asc)
 {
 	Table* table = initTable(tableName);
 	if (!table) return;
 	std::ifstream tableFile = getStreamIN(tableName);
 
 	BinaryQueryTree bq_tree(table);
+
 	bq_tree.init(query);
+	std::list<Record> found, searched;
+	while (table->read_chunk(tableFile, MAX_ROWS_RETURN)) {
 
-	while (table->getContents(tableFile, MAX_ROWS_RETURN)) {
-
-		tableFile.close();
-		std::list<Record> found = bq_tree.search();
-
-		std::cout << tableName << std::endl;
-		printSelected(found);
+		searched = bq_tree.search();
+		if (distinct) unify(found, searched);
+		else append(found, bq_tree.search());
 
 		table->clear();
-		tableFile = getStreamIN(tableName);
 	}
+
+	if (!orderBy.empty()) {
+		size_t pos = table->schema().pos(orderBy);
+
+		found.sort(Record::Compare(pos, asc));
+	}
+
+	std::cout << tableName << std::endl;
+	table->print_schema();
+	printSelected(found);
 
 	tableFile.close();
 	table->reset();
+	delete table;
 
-	//print elements in every iteration
+	save();
 }
 
-void DataBase::selectSome(const std::string& tableName, const table_row& cols, const std::string& query) 
+void DataBase::selectSome(const std::string& tableName, const table_row& cols, 
+	const std::string& query, bool distinct, const std::string& orderBy, bool asc)
 {
 	Table* table = initTable(tableName);
-	std::vector<bool> selectedColumns = table->getSchema().columns(cols);
+	std::vector<bool> selectedColumns = table->schema().columns(cols);
 
 	if (!table) return;
 	std::ifstream tableFile = getStreamIN(tableName);
@@ -196,21 +214,30 @@ void DataBase::selectSome(const std::string& tableName, const table_row& cols, c
 	BinaryQueryTree bq_tree(table);
 	bq_tree.init(query);
 
-	while (table->getContents(tableFile, MAX_ROWS_RETURN)) {
+	std::list<Record> found, searched;
+	while (table->read_chunk(tableFile, MAX_ROWS_RETURN)) {
 
-		tableFile.close();
-		std::list<Record> found = bq_tree.search();
-
-		std::cout << tableName << std::endl;
-
-		printSelected(found, selectedColumns);
+		searched = bq_tree.search();
+		if (distinct) unify(found, searched);
+		else append(found, bq_tree.search());
 
 		table->clear();
-		tableFile = getStreamIN(tableName);
 	}
+
+	std::cout << tableName << std::endl;
+	if (!orderBy.empty()) {
+		size_t pos = table->schema().pos(orderBy);
+
+		found.sort(Record::Compare(pos, asc));
+	}
+
+	table->print_schema(selectedColumns);
+	printSelected(found, selectedColumns);
 
 	tableFile.close();
 	table->reset();
+
+	save();
 }
 
 std::list<Table*> DataBase::get_tables()
@@ -230,6 +257,11 @@ std::list<Table*> DataBase::get_tables()
 	}
 
 	return rtrn;
+}
+
+void DataBase::append(std::list<Record>& to, const std::list<Record>& what)
+{
+	std::copy(what.rbegin(), what.rend(), front_inserter(to));
 }
 
 Table* DataBase::getTable(const std::string& tableName) const
@@ -280,14 +312,19 @@ uint64_t DataBase::size(const std::string& name) const
 
 void DataBase::printSelected(const std::list<Record>& found) const
 {
+
 	for (const Record& rec : found)
 		rec.print();
+
+	std::cout << found.size() << " rows selected!" << std::endl;
 }
 
 void DataBase::printSelected(const std::list<Record>& found, const std::vector<bool>& cols)
 {
 	for (const Record& rec : found)
 		rec.print(cols);
+
+	std::cout << found.size() << " rows selected!" << std::endl;
 }
 
 std::ifstream DataBase::getStreamIN(const std::string& table) const
