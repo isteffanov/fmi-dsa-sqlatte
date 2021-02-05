@@ -4,7 +4,6 @@
 
 #include "Record.hpp"
 #include "Table.hpp"
-#include "read_write_helpers.hpp"
 #include "helper.hpp"
 
 class BinaryQueryTree {
@@ -101,23 +100,22 @@ inline void BinaryQueryTree::remove(Node*& root)
 
 inline void BinaryQueryTree::initRecursive(Node*& root, const std::string& query)
 {
-	size_t pos;
-
-	pos = query.find(" and ");
-	if (pos != std::string::npos) {
+	std::string leftSub, rightSub;
+	if (findMatch(query, "\\b(and)\\b") != "") {
 		root = new Node("and", nullptr);
+		leftSub = findMatch(query, "(.*?)\\band\\b");
+		rightSub = findMatch(query, "^.*?\\band\\b(.*?)$");
 	}
-	else {
-
-		pos = query.find(" or ");
-		if (pos != std::string::npos) {
-			root = new Node("or", nullptr);
-		}
+	
+	else if (findMatch(query, "\\b(or)\\b") != "") {
+		root = new Node("or", nullptr);
+		leftSub = findMatch(query, "(.*?)\\bor\\b");
+		rightSub = findMatch(query, "^.*?\\bor\\b(.*?)$");
 	}
 
 	if (root) {
-		initRecursive(root->left, query.substr(0, pos));
-		initRecursive(root->right, query.substr(pos + root->type.size()));
+		initRecursive(root->left, leftSub);
+		initRecursive(root->right, rightSub);
 	}
 	else {
 		std::string lhs;
