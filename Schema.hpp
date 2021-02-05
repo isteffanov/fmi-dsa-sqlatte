@@ -27,10 +27,20 @@ public:
 	type_name_pair(std::string _name = "", std::string _type = "")
 		:f_name(_name)
 	{
-		if (_type == INT) f_type = TYPES::INT;
-		else if (_type == DATE) f_type = TYPES::DATE;
-		else if (_type == STRING) f_type = TYPES::STRING;
-		else f_type = TYPES::INVALID;
+		switch (f_type)
+		{
+		case type_name_pair::TYPES::INT:
+			f_type = TYPES::INT;
+			break;
+		case type_name_pair::TYPES::DATE:
+			f_type = TYPES::DATE;
+			break;
+		case type_name_pair::TYPES::STRING:
+			f_type = TYPES::STRING;
+			break;
+		default:
+			f_type = TYPES::INVALID;
+		}
 	}
 
 	const type_name_pair& operator=(const type_name_pair& other);
@@ -62,8 +72,9 @@ public:
  	const type_name_pair& operator[](size_t pos) const;
 
 	const size_t						size() const;
-	const size_t						pos(std::string name) const;
-	const bool							date(std::string name) const;
+	const size_t						pos(const std::string& name) const;
+	const bool							date(const std::string& name) const;
+	const std::string&					type(const std::string& name) const;
 	const std::vector<bool>				columns(const std::vector<std::string>& names) const;
 	const std::vector<type_name_pair>&  schema() const;
 

@@ -9,7 +9,7 @@ class Date {
 	int year;
 
 public:
-	Date(const std::string& date);
+	Date(const std::string& date = "1/1/1970");
 
 	bool operator==(const Date& other);
 	bool operator!=(const Date& other);

@@ -24,11 +24,6 @@ const Schema& Table::schema() const
 	return f_schema;
 }
 
-size_t Table::size() const
-{
-	return f_schema.size();
-}
-
 void Table::info(const uint64_t size) const
 {
 	std::cout << "Table " << f_name << " : ";
@@ -56,22 +51,22 @@ const std::list<Record>& Table::table() const
 	return f_table;
 }
 
-std::list<Record> Table::search(const std::string& lhs, const std::string& operation, const std::string& rhs) const
+std::list<Record> Table::search(const Statement& st) const
 {
 	std::list<Record> rtrn;
 
-	std::string type = this->type(lhs);
+	std::string type = f_schema.type(st.lhs);
 	if (type == "int")
-		rtrn = searchTableInt(lhs, operation, std::stoi(rhs));
+		rtrn = searchTableInt(st);
 
 	else if (type == "string")
-		rtrn = searchTableStr(lhs, operation, rhs);
+		rtrn = searchTableStr(st);
 
 	else if (type == "date")
-		rtrn = searchTableDate(lhs, operation, rhs);
+		rtrn = searchTableDate(st);
 
 	else
-		std::cout << "search broke" << std::endl;
+		throw std::exception("No such column!");
 
 	return rtrn;
 }
@@ -79,14 +74,6 @@ std::list<Record> Table::search(const std::string& lhs, const std::string& opera
 const std::string& Table::name() const
 {
 	return f_name;
-}
-
-const std::string& Table::type(const std::string& name) const
-{
-	for (const type_name_pair& pair : f_schema.schema())
-		if (pair.name() == name) return pair.type();
-
-	return "unknown";
 }
 
 bool Table::read_chunk(std::ifstream& in, const int maxReturn)
@@ -142,66 +129,63 @@ std::ofstream& operator<<(std::ofstream& out, const Table*& table)
 	return out;
 }
 
-std::list<Record> Table::searchTableInt(const std::string& lhs, const std::string& op, int value) const
+std::list<Record> Table::searchTableInt(const Statement& st) const
 {
 	std::list<Record> rtrn;
+	int pos = f_schema.pos(st.lhs);
+
+	int lhs;
+	int rhs = std::stoi(st.rhs);
 	for (const Record& rec : f_table) {
-		std::string entry;
-
-		int pos = f_schema.pos(lhs);
-		if (pos != -1) entry = rec[pos];
+		if (pos != -1) lhs = std::stoi(rec[pos]);	
 		
-		
-
-		if ((op == "==")		&& std::stoi(entry) == value) rtrn.push_back(rec);
-		else if ((op == "!=")	&& std::stoi(entry) != value) rtrn.push_back(rec);
-		else if ((op == "<")	&& std::stoi(entry) < value) rtrn.push_back(rec);
-		else if ((op == ">")	&& std::stoi(entry) > value) rtrn.push_back(rec);
-		else if ((op == "<=")	&& std::stoi(entry) <= value) rtrn.push_back(rec);
-		else if ((op == ">=")	&& std::stoi(entry) >= value) rtrn.push_back(rec);
+		if		((st.op == "==")	&& lhs == rhs) rtrn.push_back(rec);
+		else if ((st.op == "!=")	&& lhs != rhs) rtrn.push_back(rec);
+		else if ((st.op == "<")		&& lhs <  rhs) rtrn.push_back(rec);
+		else if ((st.op == ">")		&& lhs >  rhs) rtrn.push_back(rec);
+		else if ((st.op == "<=")	&& lhs <= rhs) rtrn.push_back(rec);
+		else if ((st.op == ">=")	&& lhs >= rhs) rtrn.push_back(rec);
 	}
 	
 	return rtrn;
 }
 
-std::list<Record> Table::searchTableStr(const std::string& lhs, const std::string& op, const std::string& value) const
+std::list<Record> Table::searchTableStr(const Statement& st) const
 {
 	std::list<Record> rtrn;
+	std::string lhs;
+
+	int pos = f_schema.pos(st.lhs);
 	for (const Record& rec : f_table) {
-		std::string entry;
+		if (pos != -1) lhs = rec[pos];
 
-		int pos = f_schema.pos(lhs);
-		if (pos != -1) entry = rec[pos];
-
-		if ((op == "==")		&& entry == value) rtrn.push_back(rec);
-		else if ((op == "!=")	&& entry != value) rtrn.push_back(rec);
-		else if ((op == "<")	&& entry < value) rtrn.push_back(rec);
-		else if ((op == ">")	&& entry > value) rtrn.push_back(rec);
-		else if ((op == "<=")	&& entry <= value) rtrn.push_back(rec);
-		else if ((op == ">=")	&& entry >= value) rtrn.push_back(rec);
+		if		((st.op == "==")	&& lhs == st.rhs) rtrn.push_back(rec);
+		else if ((st.op == "!=")	&& lhs != st.rhs) rtrn.push_back(rec);
+		else if ((st.op == "<")		&& lhs <  st.rhs) rtrn.push_back(rec);
+		else if ((st.op == ">")		&& lhs >  st.rhs) rtrn.push_back(rec);
+		else if ((st.op == "<=")	&& lhs <= st.rhs) rtrn.push_back(rec);
+		else if ((st.op == ">=")	&& lhs >= st.rhs) rtrn.push_back(rec);
 	}
 
 	return rtrn;
 }
 
-std::list<Record> Table::searchTableDate(const std::string& lhs, const std::string& op, const std::string& value) const
+std::list<Record> Table::searchTableDate(const Statement& st) const
 {
 	std::list<Record> rtrn;
+
+	Date lhs;
+	Date rhs = Date(st.rhs);
+	int pos = f_schema.pos(st.lhs);
 	for (const Record& rec : f_table) {
-		std::string entry;
+		if (pos != -1) lhs = Date(rec[pos]);
 
-		int pos = f_schema.pos(lhs);
-		if (pos != -1) entry = rec[pos];
-
-		Date dateEntry = Date(entry);
-		Date dateValue = Date(value);
-
-		if ((op == "==") && dateEntry == dateValue) rtrn.push_back(rec);
-		else if ((op == "!=") && dateEntry != dateValue) rtrn.push_back(rec);
-		else if ((op == "<") && dateEntry < dateValue) rtrn.push_back(rec);
-		else if ((op == ">") && dateEntry > dateValue) rtrn.push_back(rec);
-		else if ((op == "<=") && dateEntry <= dateValue) rtrn.push_back(rec);
-		else if ((op == ">=") && dateEntry >= dateValue) rtrn.push_back(rec);
+		if		((st.op == "==")	&& lhs == rhs) rtrn.push_back(rec);
+		else if ((st.op == "!=")	&& lhs != rhs) rtrn.push_back(rec);
+		else if ((st.op == "<")		&& lhs <  rhs) rtrn.push_back(rec);
+		else if ((st.op == ">")		&& lhs >  rhs) rtrn.push_back(rec);
+		else if ((st.op == "<=")	&& lhs <= rhs) rtrn.push_back(rec);
+		else if ((st.op == ">=")	&& lhs >= rhs) rtrn.push_back(rec);
 	}
 
 	return rtrn;

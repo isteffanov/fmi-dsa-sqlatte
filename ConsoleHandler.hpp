@@ -32,15 +32,12 @@ private:
 	void remove();
 	void select();
 
-	void tolower(std::string& word);
 	bool createTableHelper();
 	bool selectHelper();
 	bool removeHelper();
 	bool insertIntoHelper();
 
-	const table_row getSelectedColumns(std::string& select);
-
-	void removeWhitespace(std::string& str);
-	bool isLetterOrUnderscore(char c) const;
+	bool assert_input(const std::string& line, const std::string& expr);
+	void tolower(std::string& word);
 };
 

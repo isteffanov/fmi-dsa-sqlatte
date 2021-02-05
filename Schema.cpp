@@ -32,7 +32,7 @@ const size_t Schema::size() const
 	return f_schema.size();
 }
 
-const size_t Schema::pos(std::string name) const
+const size_t Schema::pos(const std::string& name) const
 {
 	for (int i = 0; i < f_schema.size(); ++i)
 		if (f_schema[i].name() == name) return i;
@@ -40,7 +40,7 @@ const size_t Schema::pos(std::string name) const
 	return std::string::npos;
 }
 
-const bool Schema::date(std::string name) const
+const bool Schema::date(const std::string& name) const
 {
 	for (const type_name_pair& pair : f_schema)
 		if (pair.name() == name) 
@@ -52,6 +52,14 @@ const bool Schema::date(std::string name) const
 const std::vector<type_name_pair>& Schema::schema() const
 {
 	return f_schema;
+}
+
+const std::string& Schema::type(const std::string& name) const
+{
+	for (const type_name_pair& pair : f_schema)
+		if (pair.name() == name) return pair.type();
+
+	return "unknown";
 }
 
 const std::vector<bool> Schema::columns(const std::vector<std::string>& names) const

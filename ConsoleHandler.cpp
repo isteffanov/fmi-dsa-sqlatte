@@ -199,7 +199,7 @@ bool ConsoleHandler::selectHelper()
 
 	if (!order.empty()) query = findMatch(query, "\\s*(.*?)" + order + "$");
 	
-	table_row cols = getSelectedColumns(select);
+	table_row cols = findMatches(select, "\\w+");
 
 	if (!cols.empty() && !byWhat.empty()) {
 		bool found = false;
@@ -212,63 +212,9 @@ bool ConsoleHandler::selectHelper()
 	db->select(table, query, cols, distinct, byWhat, asc);
 }
 
-const table_row ConsoleHandler::getSelectedColumns(std::string& select)
-{
-	std::string cur;
-	table_row cols;
-	if (select.empty()) return cols;
-
-	std::string::iterator it = select.begin();
-
-	while (*it == ' ')
-		++it;
-
-	if (*it != '*') {
-
-		while (true) {
-
-			while (it != select.end() && *it == ' ')
-				++it;
-
-			while (isLetterOrUnderscore(*it))
-				cur.push_back(*it++);
-
-			cols.push_back(cur);
-			cur.clear();
-
-			while (it != select.end() && *it == ' ')
-				++it;
-
-			if (it != select.end() && *it == ',') {
-				++it;
-				continue;
-			}
-
-			if (it == select.end() || *it == ' ') break;
-			
-		}
-	}
-
-	return cols;
-}
-
 bool ConsoleHandler::assert_input(const std::string& line, const std::string& expr)
 {
 	return ( findMatch(line, expr) != "");
-}
-
-void ConsoleHandler::removeWhitespace(std::string& str)
-{
-	std::string cpy = str;
-	str.clear();
-
-	for (std::string::iterator it = cpy.begin(); it != cpy.end(); ++it)
-		if (*it != ' ') str.push_back(*it);	
-}
-
-bool ConsoleHandler::isLetterOrUnderscore(char c) const
-{
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
 }
 
 void ConsoleHandler::tolower(std::string& word)

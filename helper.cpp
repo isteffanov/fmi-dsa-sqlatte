@@ -1,5 +1,6 @@
 #include "helper.hpp"
 
+
 std::string findMatch(const std::string& str, const std::string& expr)
 {
 	std::regex reg(expr, std::regex::ECMAScript | std::regex::icase);

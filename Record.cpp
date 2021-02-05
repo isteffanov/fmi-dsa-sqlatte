@@ -51,7 +51,7 @@ void Record::print(const std::vector<bool>& cols) const
 	std::cout << "|";
 	for (int i = 0; i < row.size(); ++i)
 		if(cols[i]) std::cout << row[i] << '\t' << "|";
-	std::cout << std::endl;
+	std::cout << '\n';
 }
 
 std::ofstream& operator<<(std::ofstream& out, const Record& record)

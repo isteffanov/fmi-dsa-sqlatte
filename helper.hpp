@@ -5,6 +5,16 @@
 #include <fstream>
 #include <regex>
 
+struct Statement {
+	std::string lhs;
+	std::string rhs;
+
+	std::string op;
+
+	Statement(std::string _lhs = "", std::string _op = "", std::string _rhs = "")
+		:lhs(_lhs), op(_op), rhs(_rhs) {}
+};
+
 template<class T>
 bool isPresent(const std::list<T>& list, const T& cmp)
 {
@@ -17,8 +27,13 @@ bool isPresent(const std::list<T>& list, const T& cmp)
 template<class T>
 void intersect(std::list<T>& lhs, std::list<T>& rhs)
 {
-	for (typename std::list<T>::iterator it = lhs.begin(); it != lhs.end(); ++it)
-		if (!isPresent(rhs, *it)) lhs.erase(it);
+	for (typename std::list<T>::iterator it = lhs.begin(); it != lhs.end();) {
+		if (!isPresent(rhs, *it)) 
+			it = lhs.erase(it);
+		else
+			++it;
+		
+	}
 }
 
 template<class T>
@@ -26,6 +41,12 @@ void unify(std::list<T>& lhs, std::list<T>& rhs)
 {
 	for (typename std::list<T>::iterator it = rhs.begin(); it != rhs.end(); ++it)
 		if (!isPresent(lhs, *it)) lhs.push_back(*it);
+}
+
+template<class T>
+void append(std::list<T>& to, const std::list<T>& what)
+{
+	if (!what.empty()) std::copy(what.rbegin(), what.rend(), front_inserter(to));
 }
 
 std::string findMatch(const std::string& str, const std::string& expr);
