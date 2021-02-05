@@ -105,10 +105,15 @@ void ConsoleHandler::select()
 
 bool ConsoleHandler::createTableHelper()
 {
+
 	std::string line;
 	std::getline(std::cin, line);
 
-	std::string name = findMatch(line, "^\\s*(\\w+)\\s+");
+	if (!assert_input(line, "(^\\s*\\w+\\s*\\((\\s*\\w+\\s*:\\s*\\w+\\s*(,|\\)\\s*$))+)[^$]")) 
+		return false;
+
+	std::string name = findMatch(line, "^\\s*(\\w+)\\s*");
+	if (name.empty()) return false;
 
 	std::regex rem("(,)");
 	line = std::regex_replace(line, rem, "");
@@ -118,11 +123,13 @@ bool ConsoleHandler::createTableHelper()
 	std::vector<std::string> names = findMatches(line, "(\\w+(?=:))");
 	std::vector<std::string> types = findMatches(line, ":\\s*(\\w+)");
 
+	if (names.size() != types.size() || names.empty() || types.empty()) return false;
+
 	std::regex rem3(":\\s*");
 	for (std::string& type : types)
 		type = std::regex_replace(type, rem3, "");  //i could not escape ":" otherwise
 	
-	return db->create(name, names, types);
+	db->create(name, names, types);
 }
 
 bool ConsoleHandler::insertIntoHelper()
@@ -150,8 +157,11 @@ bool ConsoleHandler::removeHelper()
 	std::string line;
 	std::getline(std::cin, line);
 
-	std::string table = findMatch(line, "^[ ]*from[ ]+(\\w+)[ ]+where[ ]+[\\w\\s><!=]+");
-	std::string query = findMatch(line, "^[ ]*from[ ]+[\\w]+[ ]+where[ ]+([\\w\\s><!=]+)");
+	if (!assert_input(line, "(^\\s*from\\s+\\w+\\s+where(\\s+\\w+\\s*[!=<>]{1,2}\\s*[\\w/]+\\s*[$|(and|or)])+[^$])"))
+		return false;
+
+	std::string table = findMatch(line, "^[ ]*from[ ]+(\\w+)[ ]+where[ ]+[\\w\\s><!=/]+");
+	std::string query = findMatch(line, "^[ ]*from[ ]+[\\w]+[ ]+where[ ]+([\\w\\s><!=/]+)");
 
 	if (table == "" || query == "") return false;
 
@@ -164,10 +174,16 @@ bool ConsoleHandler::selectHelper()
 	std::string line;
 	std::getline(std::cin, line);
 	
+	std::string orde = "(order\\s+by\\s+\\w+\\s*(asc|desc)?)?$";
+	std::string wher = "where(\\s+\\w+\\s*[!=<>]{1,2}\\s*[\\w/]+\\s+[(and|or)|" + orde + "])+";
+	std::string from = "from\\s+\\w+\\s+(" + wher + ")";
+	if (!assert_input(line, "(^\\s*(distinct)?\\s*(\\*|(\\s*\\w+\\s*)(,|" + from + ")))"))
+		return false;
+
 	std::string dist = findMatch(line, "^\\s*(distinct)");
 	std::string table = findMatch(line, "\\s*from\\s+(\\w+)");
 	std::string query = findMatch(line, "\\s*from\\s+" + table + "\\s+where([\\w\\s!=<>/]+)$");
-	std::string order = findMatch(line, "\\s*from\\s+" + table + "\\s+(order\\s+by[\\s\\w]*)$");
+	std::string order = findMatch(line, "\\s*from\\s+" + table + ".*?(order\\s+by[\\s\\w]*)$");
 	std::string byWhat = findMatch(order, "\\s*order\\s+by\\s+(\\w+)\\s*(asc|desc)?$");
 	std::string cend = findMatch(order, "\\s*order\\s+by\\s+" + byWhat + "\\s+(asc|desc)$");
 
@@ -181,7 +197,7 @@ bool ConsoleHandler::selectHelper()
 	else			select = findMatch(line, "\\s*([\*\\w\\s,]*)from\\s*" + table +
 											"(\\s+where\\s*" + query + ")?\\s*");
 
-	if (!order.empty()) query = findMatch(query, "(.*?)" + order + "$");
+	if (!order.empty()) query = findMatch(query, "\\s*(.*?)" + order + "$");
 	
 	table_row cols = getSelectedColumns(select);
 
@@ -234,6 +250,11 @@ const table_row ConsoleHandler::getSelectedColumns(std::string& select)
 	}
 
 	return cols;
+}
+
+bool ConsoleHandler::assert_input(const std::string& line, const std::string& expr)
+{
+	return ( findMatch(line, expr) != "");
 }
 
 void ConsoleHandler::removeWhitespace(std::string& str)
