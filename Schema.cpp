@@ -59,13 +59,15 @@ const std::string& Schema::type(const std::string& name) const
 	for (const type_name_pair& pair : f_schema)
 		if (pair.name() == name) return pair.type();
 
-	return "unknown";
+	return type_name_pair::UNKNOWN;
 }
 
 const std::vector<bool> Schema::columns(const table_row& names) const
 {
 	std::vector<bool> rtrn;
 	
+	//return vector of same length as the schema with has
+	//true where the name is contained in the passed vector
 	bool found;
 	for (const type_name_pair& pair : f_schema) {
 		found = false;
@@ -80,6 +82,26 @@ const std::vector<bool> Schema::columns(const table_row& names) const
 	}
 		
 	return rtrn;
+}
+
+void Schema::print() const
+{
+	std::cout << "|";
+	for (int i = 0; i < f_schema.size(); ++i)
+		std::cout << std::setw(6) << f_schema[i].name() << '|';
+	std::cout << std::endl;
+
+	std::cout << std::setw(22) << std::setfill('-') << '\n';
+}
+
+void Schema::print(const std::vector<bool>& cols) const
+{
+	std::cout << "|";
+	for (int i = 0; i < f_schema.size(); ++i)
+		if (cols[i]) std::cout << std::setw(6) << f_schema[i].name() << '|';
+	std::cout << std::endl;
+
+	std::cout << std::setw(22) << std::setfill('-') << '\n';
 }
 
 std::ifstream& operator>>(std::ifstream& in, Schema& schema)
@@ -107,6 +129,7 @@ std::ifstream& operator>>(std::ifstream& in, Schema& schema)
 
 std::ofstream& operator<<(std::ofstream& out, const Schema& schema)
 {
+	//write the size of the schema, then the two strings in each pair
 	if (out.good()) {
 		size_t size = schema.size();
 		out.write((const char*)&size, sizeof(size_t));
@@ -120,13 +143,4 @@ std::ofstream& operator<<(std::ofstream& out, const Schema& schema)
 	return out;
 }
 
-//const type_name_pair& type_name_pair::operator=(const type_name_pair& other)
-//{
-//	if (this != &other) {
-//		this->f_type = other.f_type;
-//		this->f_name = other.f_name;
-//	}
-//
-//	return *this;
-//}
 

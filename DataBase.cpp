@@ -50,28 +50,30 @@ bool DataBase::create(const std::string& name, const table_row& names, const tab
 	if(!write_string(out, name)) return false;
 	if (!(out << Schema(names, types)) ) return false;
 
-	save();
-	reset();
 	std::ofstream file = getStreamOUT(name); //create the table file
 	
 	if (!file.is_open()) return false;
 	file.close();
 
+	save();
+	reset();
+
+	std::cout << "Table " << name << " created!" << std::endl;
 	return true;
 }
 
 bool DataBase::drop(const std::string& table)
 {
 	std::string toRemove = getTablePath(table);
-	if (std::remove(toRemove.c_str()) != 0) {						
-		std::cerr << "Remove failed!" << std::endl;
+	if (std::remove(toRemove.c_str()) != 0) 
 		return false;
-	}
-
+	
 	std::ofstream temp = getStreamOUT("temp");
 
 	std::string name;
 	Schema schema;
+
+	//copy each table's info from the db file to the temp file
 	while (read_string(in, name) && in >> schema) {
 		if (name == table) continue;
 
@@ -79,16 +81,31 @@ bool DataBase::drop(const std::string& table)
 		temp << schema;
 	}
 
-	std::rename("temp", toRemove.c_str());
+	std::string tempName = getTablePath("temp");
+
+	close();
+	temp.close();
+
+	if (std::remove(DB_FILE.c_str()) != 0) {
+		std::remove(tempName.c_str());
+		return false;
+	}
+	
+	std::rename(tempName.c_str(), DB_FILE.c_str());
+	open();
 	return true;
 }
 
 bool DataBase::insert(const std::string& name, const list_record& recs)
 {
 	Table* table = initTable(name);
-	for (const Record& rec : recs)
+	//validate the received records
+	for (const Record& rec : recs) {
 		if (rec.size() != table->schema().size()) 
 			return false;
+		if (!table->validate(rec)) 
+			return false;
+	}
 
 	std::ofstream file = getStreamOUT(name);
 	if (!file.is_open()) {
@@ -96,11 +113,17 @@ bool DataBase::insert(const std::string& name, const list_record& recs)
 		return false;
 	}
 
-	for(const Record& rec: recs)
+	size_t size = 0;
+	for (const Record& rec : recs) {
 		file << rec;
+		size++;
+	}
 
 	file.close();
 	delete table;
+
+	std::cout << "Inserted " << size << " records!" << std::endl;
+	return true;
 }
 
 void DataBase::remove(const std::string& tableName, const std::string& query)
@@ -112,23 +135,22 @@ void DataBase::remove(const std::string& tableName, const std::string& query)
 		return;
 	}
 
-	BinaryQueryTree bq_tree(table);
-	bq_tree.init(query);
+	BinaryQueryTree bq_tree(table, query);
 
-	while(table->read_chunk(tableFile, MAX_ROWS_RETURN)){
-		
-		tableFile.close();
-		list_record found = bq_tree.search();
+	//read the table file chuck by chunk 
+	//and load the matching records
+	list_record searched, found;
+	while(table->readChunk(tableFile, MAX_ROWS_RETURN)){
 
-		removeRecords(tableName, found);
-
-		table->clear();
-		tableFile = getStreamIN(tableName);
+		searched = bq_tree.search();
+		append(found, searched);
 	}
 
 	tableFile.close();
 	delete table;
 	reset();
+
+	removeRecords(tableName, found);	
 }
 
 void DataBase::select(const std::string& table, const std::string query,
@@ -169,9 +191,10 @@ void DataBase::removeRecords(const std::string& table, list_record& found)
 	std::ifstream from = getStreamIN(table);
 	std::ofstream to = getStreamOUT("temp");
 
+	//move other content to new file
 	Record cur;
 	bool same = false;
-	while (from >> cur) {								//move other content to new file
+	while (from >> cur) {								
 		for (const Record rec : found) {
 			if (rec == cur) {
 				same = true;
@@ -208,19 +231,27 @@ void DataBase::selectAll(const std::string& tableName, const std::string& query,
 		return;
 	}
 
-	BinaryQueryTree bq_tree(table);
-	bq_tree.init(query);
+	BinaryQueryTree bq_tree(table, query);
 
+	//read the table file chuck by chuck  
+	//until we have all the matches in a list
 	list_record found, searched;
-	while (table->read_chunk(tableFile, MAX_ROWS_RETURN)) {
+	while (table->readChunk(tableFile, MAX_ROWS_RETURN)) {
 		
-		searched = bq_tree.search();
-		if (distinct) unify(found, searched);
-		else append(found, searched);
+		try {
+			searched = bq_tree.search();
+		}
+		catch (std::exception& e) {
+			std::cout << e.what() << std::endl;
+			return;
+		}
+		append(found, searched);
 
 		table->clear();
 	}
+	if (distinct) removeDuplicates(found);
 
+	//sort the found matches if requested
 	if (!orderBy.empty()) {
 		size_t pos = table->schema().pos(orderBy);
 		bool isDate = table->schema().date(orderBy);
@@ -228,7 +259,7 @@ void DataBase::selectAll(const std::string& tableName, const std::string& query,
 	}
 
 	std::cout << tableName << std::endl;
-	table->print_schema();
+	table->schema().print();
 	printSelected(found);
 
 	tableFile.close();
@@ -249,28 +280,36 @@ void DataBase::selectSome(const std::string& tableName, const table_row& cols,
 		return;
 	}
 
-	BinaryQueryTree bq_tree(table);
-	bq_tree.init(query);
+	BinaryQueryTree bq_tree(table, query);
 
+	//read the table file chuck by chuck  
+	//until we have all the matches in a list
 	list_record found, searched;
-	while (table->read_chunk(tableFile, MAX_ROWS_RETURN)) {
+	while (table->readChunk(tableFile, MAX_ROWS_RETURN)) {
 
-		searched = bq_tree.search();
-		if (distinct) unify(found, searched);
-		else append(found, searched);
+		try {
+			searched = bq_tree.search();
+		}
+		catch (std::exception& e) {
+			std::cout << e.what() << std::endl;
+			return;
+		}
+		append(found, searched);
 
 		table->clear();
 	}
+	if (distinct) removeDuplicates(found);
 
-	std::cout << tableName << std::endl;
+	//sort the found matches if requested
 	if (!orderBy.empty()) {
 		size_t pos = table->schema().pos(orderBy);
 		bool isDate = table->schema().date(orderBy);
 		found.sort(Record::Compare(pos, isDate, asc));
 	}
-
 	std::vector<bool> selectedColumns = table->schema().columns(cols);
-	table->print_schema(selectedColumns);
+
+	std::cout << tableName << std::endl;
+	table->schema().print(selectedColumns);
 	printSelected(found, selectedColumns);
 
 	tableFile.close();
@@ -297,6 +336,7 @@ list_tableptr DataBase::tables()
 		rtrn.push_front(new Table(name, schema));
 	}
 
+	reset();
 	return rtrn;
 }
 
@@ -310,16 +350,27 @@ Table* DataBase::initTable(const std::string& tableName)
 		if (!in) break;
 	} while (name != tableName);
 
+	reset();
 	if (name != "") return new Table(name, schema);
 	else return nullptr;
 }
 
 void DataBase::save()	
 {
-	in.close();
-	out.close();
+	close();
+	open();	
+}
+
+void DataBase::open()
+{
 	in.open(DB_FILE.c_str(), std::ios::binary);
 	out.open(DB_FILE.c_str(), std::ios::binary | std::ios::app);
+}
+
+void DataBase::close()
+{
+	in.close();
+	out.close();
 }
 
 void DataBase::reset()
@@ -328,7 +379,30 @@ void DataBase::reset()
 	out.seekp(SEEK_SET);
 }
 
-void DataBase::printSelected(list_record& found)
+void DataBase::removeDuplicates(list_record& found)
+{
+	list_record temp;
+
+	size_t size = getSize(found);
+
+	bool dublicate;
+	for (list_record_it it = found.begin(); it != found.end(); ++it) {
+		dublicate = false;
+		list_record_it next = it;
+		while (++next != found.end()) {
+			if (*it == *next) {
+				dublicate = true;
+				break;
+			}
+		}
+		if (!dublicate) temp.push_front(*it);
+	}
+
+	found.clear();
+	found = temp;
+}
+
+void DataBase::printSelected(const list_record& found)
 {
 	for (const Record& rec : found)
 		rec.print();
@@ -336,7 +410,7 @@ void DataBase::printSelected(list_record& found)
 	std::cout << getSize(found) << " rows selected!" << std::endl;
 }
 
-void DataBase::printSelected(list_record& found, const std::vector<bool>& cols)
+void DataBase::printSelected(const list_record& found, const std::vector<bool>& cols)
 {
 	for (const Record& rec : found)
 		rec.print(cols);

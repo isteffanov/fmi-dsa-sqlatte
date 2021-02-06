@@ -33,22 +33,25 @@ public:
 				bool distinct, const std::string& orderBy, bool asc);
 
 private:
-	uint64_t		size(const std::string& name) const;
-	size_t			count(const std::string& name) const;
+	uint64_t		size(const std::string& name) const;		//size in bytes of the file
+	size_t			count(const std::string& name) const;		//number of records in the file
 	void			removeRecords(const std::string& table, list_record& found);
 	void			selectAll(const std::string& name, const std::string& query,
 							bool distinct, const std::string& orderBy, bool asc);
 	void			selectSome(const std::string& name, const table_row& cols,
 							const std::string& query, bool distinct, const std::string& orderBy, bool asc);
 
-	list_tableptr	tables();
-	Table*			initTable(const std::string& tableName); //get empty table with its schema
+	list_tableptr	tables(); //read all the names and schemas from the DB file
+	Table*			initTable(const std::string& tableName); //get empty table with its name and schema
 
-	void			save();
-	void			reset();
+	void			save();	
+	void			open();
+	void			close();
+	void			reset();	//move the file pointers to the beginning 
 
-	void			printSelected(list_record& found);
-	void			printSelected(list_record& found, const std::vector<bool>& cols);
+	void			removeDuplicates(list_record& found);
+	void			printSelected(const list_record& found);
+	void			printSelected(const list_record& found, const std::vector<bool>& cols);
 
 	std::ifstream	getStreamIN(const std::string& table) const;
 	std::ofstream	getStreamOUT(const std::string& table) const;

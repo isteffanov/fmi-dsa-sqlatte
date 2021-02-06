@@ -56,6 +56,7 @@ list_record Table::search(const Statement& st) const
 	list_record rtrn;
 
 	std::string type = f_schema.type(st.lhs);
+	//depending on the type we use different compatisons
 	if (type == "int")
 		rtrn = searchTableInt(st);
 
@@ -76,7 +77,23 @@ const std::string& Table::name() const
 	return f_name;
 }
 
-bool Table::read_chunk(std::ifstream& in, const int maxReturn)
+bool Table::validate(const Record& rec)
+{
+	for (int i = 0; i < rec.size(); ++i) {
+		try {
+			//if there is an exception, do not allow further continuation
+			if (f_schema[i].type() == type_name_pair::INT) std::stoi(rec[i]);
+			else if (f_schema[i].type() == type_name_pair::DATE) Date d(rec[i]);
+		}
+		catch (...) {
+			return false;
+		}		
+	}
+
+	return true;
+}
+
+bool Table::readChunk(std::ifstream& in, const int maxReturn)
 {
 	Record cur;
 
@@ -93,33 +110,6 @@ bool Table::read_chunk(std::ifstream& in, const int maxReturn)
 	f_last_file_pos = in.tellg();
 
 	return true;
-}
-
-void Table::print_schema() const
-{
-	std::cout << "|";
-	for (int i = 0; i < f_schema.size(); ++i)
-		std::cout << std::setw(6) << f_schema[i].name() << '|';
-	std::cout << std::endl;
-	
-	std::cout << std::setw(22) << std::setfill('-') << '\n';
-}
-
-void Table::print_schema(const std::vector<bool>& cols) const
-{
-	std::cout << "|";
-	for (int i = 0; i < f_schema.size(); ++i)
-		if (cols[i]) std::cout << std::setw(6) << f_schema[i].name() << '|';
-	std::cout << std::endl;
-
-	std::cout << std::setw(22) << std::setfill('-') << '\n';
-}
-
-std::ifstream& operator>>(std::ifstream& in, Table*& table)
-{
-	read_list(in, table->f_table);
-
-	return in;
 }
 
 std::ofstream& operator<<(std::ofstream& out, const Table*& table)

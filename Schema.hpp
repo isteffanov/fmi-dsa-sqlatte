@@ -1,4 +1,6 @@
 #pragma once
+#include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -6,12 +8,11 @@
 #include "helper.hpp"
 
 struct type_name_pair {
-private:
 	static const std::string INT;
 	static const std::string STRING;
 	static const std::string DATE;
 	static const std::string UNKNOWN;
-
+private:
 	static enum class TYPES {
 		INT = 0,
 		DATE,
@@ -32,8 +33,7 @@ public:
 		else if (_type == STRING) f_type = TYPES::STRING;
 		else f_type = TYPES::INVALID;
 	}
-	//const type_name_pair& operator=(const type_name_pair& other);
-
+	
 	const std::string& name() const { return f_name; }
 	const std::string& type() const {
 		switch (f_type)
@@ -60,13 +60,16 @@ public:
 
  	const type_name_pair& operator[](size_t pos) const;
 
-	const size_t						size() const;
-	const size_t						pos(const std::string& name) const;
-	const bool							date(const std::string& name) const;
-	const std::string&					type(const std::string& name) const;
-	const std::vector<bool>				columns(const table_row& names) const;
 	const std::vector<type_name_pair>&  schema() const;
+	
+	const size_t				size() const;
+	const size_t				pos(const std::string& name) const;
+	const bool					date(const std::string& name) const;		//does the column store dates
+	const std::string&			type(const std::string& name) const;		
+	const std::vector<bool>		columns(const table_row& names) const;		//which columns from the schema are needed
 
+	void						print() const;
+	void						print(const std::vector<bool>& cols) const;
 
 	friend std::ifstream& operator>>(std::ifstream& in, Schema& schema);
 	friend std::ofstream& operator<<(std::ofstream& out, const Schema& schema);

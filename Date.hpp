@@ -9,7 +9,7 @@ class Date {
 	int year;
 
 public:
-	Date(const std::string& date = "1/1/1970");
+	Date(const std::string& date = "1/1/1970"); //throws exception when string is invalide
 
 	bool operator==(const Date& other);
 	bool operator!=(const Date& other);
@@ -19,7 +19,7 @@ public:
 	bool operator>=(const Date& other);
 
 private:
-	const date::year_month_day object() const;
+	const date::year_month_day object() const; //used for comparison
 };
 
 

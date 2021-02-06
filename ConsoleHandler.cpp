@@ -81,10 +81,8 @@ void ConsoleHandler::table_info() const
 
 void ConsoleHandler::insert()
 {
-	if (!(insertIntoHelper())) {
+	if (!(insertIntoHelper())) 
 		std::cerr << "Wrong format!" << std::endl;
-		return;
-	}
 }
 
 void ConsoleHandler::remove()
@@ -109,6 +107,7 @@ bool ConsoleHandler::createTableHelper()
 	std::string line;
 	std::getline(std::cin, line);
 
+	//check if the input is valid
 	std::string assertSchema = "(\\s*\\w+\\s*:\\s*\\w+\\s*(,|\\)\\s*$)";
 	if (!assert_input(line, "(^\\s*\\w+\\s*\\(" + assertSchema + ")+)[^$]")) 
 		return false;
@@ -143,10 +142,14 @@ bool ConsoleHandler::insertIntoHelper()
 	line = findMatch(line, "\\{(.*?)\\}");
 	list_record rows;
 
-	table_row entries = findMatches(line, "(?=[\\(^,])([\\w\\s/,]+)(?=\\))");
+	table_row entries = findMatches(line, "\\(([\\w\\s/,]+)\\)");
+	if (entries.empty()) return false;
 
-	for (std::string& entry : entries)
+	std::regex brack("(\\(|\\))");
+	for (std::string& entry : entries) {
+		entry = std::regex_replace(entry, brack, "");
 		rows.push_front(findMatches(entry, "([\\w\\s/]+$|[\\w\\s/]+(?=,))\\s*"));
+	}
 
 	if (rows.empty()) return false;
 	return db->insert(table, rows);
@@ -157,6 +160,7 @@ bool ConsoleHandler::removeHelper()
 	std::string line;
 	std::getline(std::cin, line);
 
+	//check if the input is valid
 	std::string assertWhere = "where(\\s+\\w+\\s*[!=<>]{1,2}\\s*[\\w/]+\\s*[$|(and|or)])+";
 	if (!assert_input(line, "(^\\s*from\\s+\\w+\\s+" + assertWhere + "[^$])"))
 		return false;
@@ -175,6 +179,7 @@ bool ConsoleHandler::selectHelper()
 	std::string line;
 	std::getline(std::cin, line);
 	
+	//check if the input is valid
 	std::string assertOrder = "(order\\s+by\\s+\\w+\\s*(asc|desc)?)?$";
 	std::string assertWhere = "where(\\s+\\w+\\s*[!=<>]{1,2}\\s*[\\w/]+\\s+(and|or|" + assertOrder + "))+";
 	std::string assertFrom = "from\\s+\\w+\\s+(" + assertWhere + ")";
@@ -182,6 +187,7 @@ bool ConsoleHandler::selectHelper()
 	if (!assert_input(line, "(^\\s*(distinct)?\\s*(\\*|\\s*\\w+\\s*(,|" + assertFrom + "))[^$])"))
 		return false;
 
+	//break down the input
 	std::string distinct	= findMatch(line, "^\\s*(distinct)");
 	std::string table		= findMatch(line, "\\s*from\\s+(\\w+)");
 	std::string query		= findMatch(line, "\\s*from\\s+" + table + "\\s+where([\\w\\s!=<>/]+)$");
@@ -201,8 +207,11 @@ bool ConsoleHandler::selectHelper()
 
 	if (!order.empty()) query = findMatch(query, "\\s*(.*?)" + order + "$");
 	
+	//get selected columns, if * it will be empty
 	table_row cols = findMatches(select, "\\w+");
 
+	//assert that if there is a column to sort by
+	//it is selected 
 	if (!cols.empty() && !byWhat.empty()) {
 		bool found = false;
 		for (const std::string& col : cols)

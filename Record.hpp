@@ -13,6 +13,7 @@ class Record
 	std::vector<std::string> row;
 
 public:
+	//used for sorting
 	class Compare {
 		size_t pos;
 		bool isDate;
@@ -53,7 +54,7 @@ public:
 
 	size_t	size() const;
 	void	print() const;
-	void	print(const std::vector<bool>& cols) const;
+	void	print(const std::vector<bool>& cols) const;	//prints specific columns
 
 	friend std::ofstream& operator<<(std::ofstream& out, const Record& record);
 	friend std::ifstream& operator>>(std::ifstream& in, Record& record);

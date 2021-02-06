@@ -8,7 +8,10 @@
 class Record;
 
 class BinaryQueryTree {
-private:
+
+	const std::string AND = "AND";
+	const std::string OR = "OR";
+
 	struct Node {
 		std::string type; //could be done with bitset
 
@@ -26,27 +29,27 @@ private:
 	Node*  root;
 
 public:
-	const std::string AND = "AND";
-	const std::string OR = "OR";
-
-	BinaryQueryTree(Table* table_ptr);
+	BinaryQueryTree(Table* table_ptr, const std::string& query);
 	BinaryQueryTree(const BinaryQueryTree& other) = delete;
 	const BinaryQueryTree& operator=(const BinaryQueryTree& other) = delete;
 	~BinaryQueryTree();
 
-	void		init(const std::string& query);
 	list_record	search();
 
 private:
+	void		init(const std::string& query); 
 	void		removeRecursive(Node*& root);
 	void		initRecursive(Node*& root, const std::string& query);
 	list_record	searchRecursive(Node* root);
 
-	const Statement		createStatement(const std::string& query);
+	const Statement	createStatement(const std::string& query);
 };
 
-inline BinaryQueryTree::BinaryQueryTree(Table* table_ptr)
-	:table(table_ptr), root(nullptr) {}
+inline BinaryQueryTree::BinaryQueryTree(Table* table_ptr, const std::string& query)
+	:table(table_ptr), root(nullptr)
+{
+	init(query);
+}
 
 inline BinaryQueryTree::~BinaryQueryTree()
 {
@@ -62,12 +65,7 @@ inline list_record BinaryQueryTree::search()
 {
 	if (!root) return table->table();
 
-	try {
-		return searchRecursive(root);
-	}
-	catch (std::exception& e) {
-		std::cout << e.what();
-	}
+	return searchRecursive(root);
 }
 
 inline void BinaryQueryTree::removeRecursive(Node*& root)
@@ -83,6 +81,15 @@ inline void BinaryQueryTree::removeRecursive(Node*& root)
 
 inline void BinaryQueryTree::initRecursive(Node*& root, const std::string& query)
 {
+	//the leafs represent simple statements
+	//every other node is either 'and' or 'or'
+	//and its value is return is dependent on
+	//its children
+
+	//if one of 'and' or 'or' is found
+	//the recursion continues building
+	//until a simple statement is found
+
 	std::string leftSub, rightSub;
 	if (findMatch(query, "\\b(" + AND +")\\b") != "") {
 		root = new Node(AND, nullptr);
@@ -110,20 +117,22 @@ inline void BinaryQueryTree::initRecursive(Node*& root, const std::string& query
 
 inline list_record BinaryQueryTree::searchRecursive(Node* root)
 {
+	//traversing the tree [root - left - right]
+	//building the return of the query
+	//from the bottom up, crossing or unifying
+	//the list depending on the operator
+
 	if (root->type == "statement")
 		return table->search(*root->statement);
 
 	list_record lhs = searchRecursive(root->left);
 	list_record rhs = searchRecursive(root->right);
 
-	if (root->type == AND) {
-		intersect(lhs, rhs);
-		return list_record(lhs);
-	}
-	else if (root->type == OR) {
-		unify(lhs, rhs);
-		return list_record(lhs);
-	}
+	if (root->type == AND) 
+		return intersect(lhs, rhs);
+	
+	else if (root->type == OR) 
+		return unify(lhs, rhs);
 }
 
 inline const Statement BinaryQueryTree::createStatement(const std::string& query)

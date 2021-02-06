@@ -21,26 +21,23 @@ public:
 	Table(std::string _table_name, Schema _schema = Schema());
 	Table(std::string _table_name , table_row types, table_row names);
 
-	//getters
 	const list_record&	table() const;
 	const std::string&	name() const;
 	const Schema&		schema() const;
 
-	//setters
 	void				reset();
 	void				clear();
 
 	void				info(const size_t count, const uint64_t size) const;
 	void				insert(const table_row& record);
 
-	list_record			search(const Statement& st) const;
+	//return the records, which satisfy the statement
+	list_record			search(const Statement& st) const; 
+	bool				validate(const Record& rec);
 
-	void				print_schema() const;
-	void				print_schema(const std::vector<bool>& cols) const;
-
-	bool				read_chunk(std::ifstream& in, const int maxReturn);
-
-	friend std::ifstream& operator>>(std::ifstream& in, Table*& table);
+	//reads certain number of records
+	bool				readChunk(std::ifstream& in, const int maxReturn);	
+	//void				init(std::ifstream& in, const std::string& name);
 	friend std::ofstream& operator<<(std::ofstream& out, const Table*& table);
 
 private:
