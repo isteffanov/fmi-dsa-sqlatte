@@ -1,9 +1,18 @@
 #pragma once
-#include <list>
+#include <forward_list>
 #include <iterator>
 #include <vector>
 #include <fstream>
 #include <regex>
+
+class Record;
+class Table;
+
+typedef	 std::forward_list<Table*> list_tableptr;
+typedef	 std::forward_list<Record> list_record;
+typedef  std::forward_list<Table*>::iterator list_tableptr_it;
+typedef  std::forward_list<Record>::iterator list_record_it;
+typedef std::vector<std::string> table_row;
 
 struct Statement {
 	std::string lhs;
@@ -16,7 +25,7 @@ struct Statement {
 };
 
 template<class T>
-bool isPresent(const std::list<T>& list, const T& cmp)
+bool isPresent(const std::forward_list<T>& list, const T& cmp)
 {
 	for (const T& rec : list)
 		if (rec == cmp) return true;
@@ -25,11 +34,11 @@ bool isPresent(const std::list<T>& list, const T& cmp)
 }
 
 template<class T>
-void intersect(std::list<T>& lhs, std::list<T>& rhs)
+void intersect(std::forward_list<T>& lhs, std::forward_list<T>& rhs)
 {
-	for (typename std::list<T>::iterator it = lhs.begin(); it != lhs.end();) {
+	for (typename std::forward_list<T>::iterator it = lhs.begin(); it != lhs.end();) {
 		if (!isPresent(rhs, *it)) 
-			it = lhs.erase(it);
+			it = lhs.erase_after(it);
 		else
 			++it;
 		
@@ -37,16 +46,25 @@ void intersect(std::list<T>& lhs, std::list<T>& rhs)
 }
 
 template<class T>
-void unify(std::list<T>& lhs, std::list<T>& rhs)
+void unify(std::forward_list<T>& lhs, std::forward_list<T>& rhs)
 {
-	for (typename std::list<T>::iterator it = rhs.begin(); it != rhs.end(); ++it)
-		if (!isPresent(lhs, *it)) lhs.push_back(*it);
+	for (typename std::forward_list<T>::iterator it = rhs.begin(); it != rhs.end(); ++it)
+		if (!isPresent(lhs, *it)) lhs.push_front(*it);
 }
 
 template<class T>
-void append(std::list<T>& to, const std::list<T>& what)
+void append(std::forward_list<T>& to, std::forward_list<T>& what)
 {
-	if (!what.empty()) std::copy(what.rbegin(), what.rend(), front_inserter(to));
+	if (!what.empty()) to.splice_after(to.before_begin(), what);
+}
+
+template<class T>
+size_t getSize(std::forward_list<T>& list) {
+	size_t size = 0;
+	for (typename std::forward_list<T>::iterator it = list.begin(); it != list.end(); ++it)
+		size++;
+
+	return size;
 }
 
 std::string findMatch(const std::string& str, const std::string& expr);
@@ -70,35 +88,35 @@ void read_vector(std::ifstream& in, std::vector<std::string>& vec);
 void read_vector(std::fstream& in, std::vector<std::string>& vec);
 
 template<class T>
-void write_list(std::fstream& out, const std::list<T>& list) {
+void write_list(std::fstream& out, const std::forward_list<T>& list) {
 	for (const T& el : list)
 		out << el;
 }
 
 template<class T>
-void write_list(std::ofstream& out, const std::list<T>& list) {
+void write_list(std::ofstream& out, const std::forward_list<T>& list) {
 	for (const T& el : list)
 		out << el;
 }
 
 template<class T>
-void read_list(std::fstream& in, std::list<T>& list) {
+void read_list(std::fstream& in, std::forward_list<T>& list) {
 
 	if (in.good()) {
 		T cur;
 		while (in >> cur) {
-			list.push_back(cur);
+			list.psuh_front(cur);
 		}
 	}
 }
 
 template<class T>
-void read_list(std::ifstream& in, std::list<T>& list) {
+void read_list(std::ifstream& in, std::forward_list<T>& list) {
 
 	if (in.good()) {
 		T cur;
 		while (in >> cur) {
-			list.push_back(cur);
+			list.push_front(cur);
 		}
 	}
 }
