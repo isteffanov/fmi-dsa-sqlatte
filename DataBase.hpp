@@ -7,8 +7,6 @@
 #include "Table.hpp"
 #include "helper.hpp"
 
-#include "typedefs.hpp"
-
 class DataBase
 {
 	static const std::string DB_RELATIVE_PATH;
@@ -29,31 +27,31 @@ public:
 
 	bool create(const std::string& name, const table_row& names, const table_row& types);
 	bool drop(const std::string& table);
-	bool insert(const std::string& table, const std::list<Record>& rec);
+	bool insert(const std::string& table, const list_record& rec);
 	void remove(const std::string& table, const std::string& query);
-	void select(const std::string& table, const std::string query, const std::vector<std::string> cols,
+	void select(const std::string& table, const std::string query, const table_row cols,
 				bool distinct, const std::string& orderBy, bool asc);
 
 private:
-	uint64_t			size(const std::string& name) const;
-	void				removeRecords(const std::string& table, std::list<Record>& found);
-	void				selectAll(const std::string& name, const std::string& query,
+	uint64_t		size(const std::string& name) const;
+	size_t			count(const std::string& name) const;
+	void			removeRecords(const std::string& table, list_record& found);
+	void			selectAll(const std::string& name, const std::string& query,
 							bool distinct, const std::string& orderBy, bool asc);
-	void				selectSome(const std::string& name, const table_row& cols,
+	void			selectSome(const std::string& name, const table_row& cols,
 							const std::string& query, bool distinct, const std::string& orderBy, bool asc);
 
-	std::list<Table*>	tables();
-	Table*				getTable(const std::string& tableName) const;
-	Table*				initTable(const std::string& tableName); //get empty table with its schema
+	list_tableptr	tables();
+	Table*			initTable(const std::string& tableName); //get empty table with its schema
 
-	void				save();
-	void				reset();
+	void			save();
+	void			reset();
 
-	void				printSelected(const std::list<Record>& found) const;
-	void				printSelected(const std::list<Record>& found, const std::vector<bool>& cols);
+	void			printSelected(list_record& found);
+	void			printSelected(list_record& found, const std::vector<bool>& cols);
 
-	std::ifstream		getStreamIN(const std::string& table) const;
-	std::ofstream		getStreamOUT(const std::string& table) const;
-	std::string			getTablePath(const std::string& table) const;
+	std::ifstream	getStreamIN(const std::string& table) const;
+	std::ofstream	getStreamOUT(const std::string& table) const;
+	std::string		getTablePath(const std::string& table) const;
 };
 

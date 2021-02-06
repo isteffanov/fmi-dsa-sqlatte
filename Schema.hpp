@@ -27,23 +27,12 @@ public:
 	type_name_pair(std::string _name = "", std::string _type = "")
 		:f_name(_name)
 	{
-		switch (f_type)
-		{
-		case type_name_pair::TYPES::INT:
-			f_type = TYPES::INT;
-			break;
-		case type_name_pair::TYPES::DATE:
-			f_type = TYPES::DATE;
-			break;
-		case type_name_pair::TYPES::STRING:
-			f_type = TYPES::STRING;
-			break;
-		default:
-			f_type = TYPES::INVALID;
-		}
+		if (_type == INT) f_type = TYPES::INT;
+		else if (_type == DATE)	f_type = TYPES::DATE;
+		else if (_type == STRING) f_type = TYPES::STRING;
+		else f_type = TYPES::INVALID;
 	}
-
-	const type_name_pair& operator=(const type_name_pair& other);
+	//const type_name_pair& operator=(const type_name_pair& other);
 
 	const std::string& name() const { return f_name; }
 	const std::string& type() const {
@@ -67,7 +56,7 @@ class Schema {
 public:
 	Schema();
 	Schema(std::vector<type_name_pair> _schema);
-	Schema(std::vector<std::string> names, std::vector<std::string> types);
+	Schema(table_row names, table_row types);
 
  	const type_name_pair& operator[](size_t pos) const;
 
@@ -75,7 +64,7 @@ public:
 	const size_t						pos(const std::string& name) const;
 	const bool							date(const std::string& name) const;
 	const std::string&					type(const std::string& name) const;
-	const std::vector<bool>				columns(const std::vector<std::string>& names) const;
+	const std::vector<bool>				columns(const table_row& names) const;
 	const std::vector<type_name_pair>&  schema() const;
 
 

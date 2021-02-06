@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -50,6 +51,7 @@ public:
 	bool operator==(const Record& other) const;
 	bool operator!=(const Record& other) const;
 
+	size_t	size() const;
 	void	print() const;
 	void	print(const std::vector<bool>& cols) const;
 

@@ -11,7 +11,7 @@ Schema::Schema()
 Schema::Schema(std::vector<type_name_pair> _schema)
 	:f_schema(_schema) {}
 
-Schema::Schema(std::vector<std::string> names, std::vector<std::string> types)
+Schema::Schema(table_row names, table_row types)
 {
 	if (types.size() != names.size()) return;
 
@@ -62,7 +62,7 @@ const std::string& Schema::type(const std::string& name) const
 	return "unknown";
 }
 
-const std::vector<bool> Schema::columns(const std::vector<std::string>& names) const
+const std::vector<bool> Schema::columns(const table_row& names) const
 {
 	std::vector<bool> rtrn;
 	
@@ -120,13 +120,13 @@ std::ofstream& operator<<(std::ofstream& out, const Schema& schema)
 	return out;
 }
 
-const type_name_pair& type_name_pair::operator=(const type_name_pair& other)
-{
-	if (this != &other) {
-		this->f_type = other.f_type;
-		this->f_name = other.f_name;
-	}
-
-	return *this;
-}
+//const type_name_pair& type_name_pair::operator=(const type_name_pair& other)
+//{
+//	if (this != &other) {
+//		this->f_type = other.f_type;
+//		this->f_name = other.f_name;
+//	}
+//
+//	return *this;
+//}
 

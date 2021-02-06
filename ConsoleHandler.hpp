@@ -7,17 +7,17 @@
 #include <vector>
 
 #include "DataBase.hpp"
-#include "typedefs.hpp"
 #include "helper.hpp"
 
 class ConsoleHandler
 {
-
 	std::string command;
 	DataBase* db;
 
 public:
 	ConsoleHandler();
+	ConsoleHandler(const ConsoleHandler&) = delete;
+	const ConsoleHandler& operator=(const ConsoleHandler&) = delete;
 	~ConsoleHandler();
 
 	void begin();

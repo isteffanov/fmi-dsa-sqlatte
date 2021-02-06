@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <list>
+#include <forward_list>
 
 #include "Table.hpp"
 #include "helper.hpp"
@@ -34,13 +34,13 @@ public:
 	const BinaryQueryTree& operator=(const BinaryQueryTree& other) = delete;
 	~BinaryQueryTree();
 
-	void				init(const std::string& query);
-	std::list<Record>	search();
+	void		init(const std::string& query);
+	list_record	search();
 
 private:
-	void				removeRecursive(Node*& root);
-	void				initRecursive(Node*& root, const std::string& query);
-	std::list<Record>	searchRecursive(Node* root);
+	void		removeRecursive(Node*& root);
+	void		initRecursive(Node*& root, const std::string& query);
+	list_record	searchRecursive(Node* root);
 
 	const Statement		createStatement(const std::string& query);
 };
@@ -58,7 +58,7 @@ inline void BinaryQueryTree::init(const std::string& query)
 	if (!query.empty()) initRecursive(root, query);
 }
 
-inline std::list<Record> BinaryQueryTree::search() 
+inline list_record BinaryQueryTree::search() 
 {
 	if (!root) return table->table();
 
@@ -108,21 +108,21 @@ inline void BinaryQueryTree::initRecursive(Node*& root, const std::string& query
 	}
 }
 
-inline std::list<Record> BinaryQueryTree::searchRecursive(Node* root)
+inline list_record BinaryQueryTree::searchRecursive(Node* root)
 {
 	if (root->type == "statement")
 		return table->search(*root->statement);
 
-	std::list<Record> lhs = searchRecursive(root->left);
-	std::list<Record> rhs = searchRecursive(root->right);
+	list_record lhs = searchRecursive(root->left);
+	list_record rhs = searchRecursive(root->right);
 
 	if (root->type == AND) {
 		intersect(lhs, rhs);
-		return std::list<Record>(lhs);
+		return list_record(lhs);
 	}
 	else if (root->type == OR) {
 		unify(lhs, rhs);
-		return std::list<Record>(lhs);
+		return list_record(lhs);
 	}
 }
 

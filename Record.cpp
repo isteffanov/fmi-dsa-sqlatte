@@ -38,11 +38,16 @@ bool Record::operator!=(const Record& other) const
 	return !(*this == other);
 }
 
+size_t Record::size() const
+{
+	return row.size();
+}
+
 void Record::print() const
 {
 	std::cout << '|';
 	for (const std::string& entry : row)
-		std::cout << entry << '\t' << '|';
+		std::cout << std::setw(6) << std::setfill(' ') << entry << '|';
 	std::cout << '\n';
 }
 
@@ -50,7 +55,7 @@ void Record::print(const std::vector<bool>& cols) const
 {
 	std::cout << "|";
 	for (int i = 0; i < row.size(); ++i)
-		if(cols[i]) std::cout << row[i] << '\t' << "|";
+		if(cols[i]) std::cout << std::setw(6) << std::setfill(' ') << row[i] << "|";
 	std::cout << '\n';
 }
 
