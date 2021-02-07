@@ -9,6 +9,10 @@
 #include "Date.hpp"
 #include "helper.hpp"
 
+/**
+ * @details A table is represented by its name, schema and
+ * a certain amount of records it stores in a given moment.
+ */
 class Table
 {
 	int f_last_file_pos;

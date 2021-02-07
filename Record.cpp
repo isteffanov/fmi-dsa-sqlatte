@@ -16,6 +16,9 @@ const Record& Record::operator=(const Record& other)
 	return *this;
 }
 
+/**
+ * @throw An std::out_of_range exception is thrown if the index is invalid.
+ */
 const std::string& Record::operator[](size_t index) const
 {
 	if (!(index >= 0 && index < row.size()))
@@ -45,6 +48,7 @@ size_t Record::size() const
 
 void Record::print() const
 {
+	//i couldn't pretty print it
 	std::cout << '|';
 	for (const std::string& entry : row)
 		std::cout << std::setw(6) << std::setfill(' ') << entry << '|';

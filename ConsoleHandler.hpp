@@ -9,9 +9,17 @@
 #include "DataBase.hpp"
 #include "helper.hpp"
 
+/**
+ * @brief The class handels all user input, most of the validation 
+ *  and passes them to the database.
+ * @details The accepted format for each command is stated down below. 
+ * The input is case insensitive.
+ * @note <> means parameter.
+ * @note [] means optional. 
+ * @note | means or.
+ */
 class ConsoleHandler
 {
-	std::string command;
 	DataBase* db;
 
 public:

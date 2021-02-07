@@ -3,18 +3,23 @@
 const std::string DataBase::DB_RELATIVE_PATH = "database/";
 const std::string DataBase::DB_FILE = DB_RELATIVE_PATH + "db.bin";
 
+/**
+ * @details When the database is initialized, a database file is
+ *  created, which stores all the tables' names and schemas.
+ */
 DataBase::DataBase()
 {
-	out.open(DB_FILE.c_str(), std::ios::binary | std::ios::app);
-	in.open(DB_FILE.c_str(), std::ios::binary);
+	open();
 }
 
 DataBase::~DataBase()
 {
-	out.close();
-	in.close();
+	close();
 }
 
+/**
+ * @brief Prints all the table's names.
+ */
 void DataBase::list()
 {
 	list_tableptr database = tables();
@@ -34,6 +39,9 @@ void DataBase::list()
 		delete table;
 }
 
+/**
+ * @brief Prints information about a given table.
+ */
 void DataBase::info(const std::string& name)
 {
 	Table* table = initTable(name);
@@ -45,6 +53,11 @@ void DataBase::info(const std::string& name)
 	else std::cerr << "No such table!" << std::endl;
 }
 
+/**
+ * @details The table's info is splitted between two files.
+ *	The table's name and schema are saved in the database file.
+ *	The table's contents are saved in a dedicated file for it.
+ */
 bool DataBase::create(const std::string& name, const table_row& names, const table_row& types)
 {
 	if(!write_string(out, name)) return false;
@@ -62,6 +75,12 @@ bool DataBase::create(const std::string& name, const table_row& names, const tab
 	return true;
 }
 
+/**
+ * @brief Deletes a given table.
+ * @details Firstly, the table's file is deleted, then
+ * the database file is overwritten, omitting the 
+ * deleted table's data.
+ */
 bool DataBase::drop(const std::string& table)
 {
 	std::string toRemove = getTablePath(table);
@@ -96,6 +115,9 @@ bool DataBase::drop(const std::string& table)
 	return true;
 }
 
+/**
+ * @brief Adds rows to a table's file
+ */
 bool DataBase::insert(const std::string& name, const list_record& recs)
 {
 	Table* table = initTable(name);
@@ -126,6 +148,13 @@ bool DataBase::insert(const std::string& name, const list_record& recs)
 	return true;
 }
 
+/**
+ * @brief Removes the rows from a given table which match the query.
+ * @details The query is passed to a BinaryQueryTree, which 
+ *	is searched and then the resulting records are removed.
+ * @see BinaryTreeNote
+ */
+
 void DataBase::remove(const std::string& tableName, const std::string& query)
 {
 	Table* table = initTable(tableName);
@@ -153,6 +182,14 @@ void DataBase::remove(const std::string& tableName, const std::string& query)
 	removeRecords(tableName, found);	
 }
 
+/**
+ * @param cols is a vector, containing all the columns' names 
+ *	user wants to see.
+ * @param distinct If true, the user does not want dublucates.
+ * @param orderBy Is a column name, by which the user wants their data sorted.
+ * @param asc If true, the user wants their data sorted in ascending
+ *	order. Defaults to true.
+*/
 void DataBase::select(const std::string& table, const std::string query,
 	const table_row cols, bool distinct, const std::string& orderBy, bool asc)
 {
@@ -171,6 +208,9 @@ uint64_t DataBase::size(const std::string& name) const
 	return ans;
 }
 
+/**
+ * @return the number of tables in the database.
+ */
 size_t DataBase::count(const std::string& name) const
 {
 	std::ifstream file = getStreamIN(name);

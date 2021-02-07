@@ -7,6 +7,11 @@
 
 #include "helper.hpp"
 
+/**
+ * @brief The structure holds a column's type and name.
+ * @details The only accepted types are: INT, STRING and DATE.
+ *	If neither of those is provided, and INVALID type is set.
+ */
 struct type_name_pair {
 	static const std::string INT;
 	static const std::string STRING;
@@ -50,6 +55,12 @@ public:
 	}
 };
 
+/**
+ * @brief The class holds a table's 
+ * @details The schema is represented as a vector of
+ *	type_name_pairs. Each pair stores the type and the
+ *  name of a column in the table.
+ */
 class Schema {
 	std::vector<type_name_pair> f_schema;
 
@@ -59,8 +70,6 @@ public:
 	Schema(table_row names, table_row types);
 
  	const type_name_pair& operator[](size_t pos) const;
-
-	const std::vector<type_name_pair>&  schema() const;
 	
 	const size_t				size() const;
 	const size_t				pos(const std::string& name) const;

@@ -32,6 +32,11 @@ const size_t Schema::size() const
 	return f_schema.size();
 }
 
+/**
+ * @param name The method accepts a column's name. 
+ * @return The column's index. If the name is not in the schema, 
+ *	std::string::npos is returned.
+ */
 const size_t Schema::pos(const std::string& name) const
 {
 	for (int i = 0; i < f_schema.size(); ++i)
@@ -40,18 +45,13 @@ const size_t Schema::pos(const std::string& name) const
 	return std::string::npos;
 }
 
+/**
+ * @param name is a column's name.
+ * @return if the given column contains dates.
+ */
 const bool Schema::date(const std::string& name) const
 {
-	for (const type_name_pair& pair : f_schema)
-		if (pair.name() == name) 
-			return (pair.type() == "date");
-
-	return false;
-}
-
-const std::vector<type_name_pair>& Schema::schema() const
-{
-	return f_schema;
+	return type(name) == "date";
 }
 
 const std::string& Schema::type(const std::string& name) const
@@ -62,12 +62,16 @@ const std::string& Schema::type(const std::string& name) const
 	return type_name_pair::UNKNOWN;
 }
 
+/**
+ * @param names contains the names of some columns.
+ * @return a vector of bools, the same size as the schema,
+ *  where true means that the column on that same index in
+ *  the schema was in the passed to the method. 
+ */
 const std::vector<bool> Schema::columns(const table_row& names) const
 {
 	std::vector<bool> rtrn;
 	
-	//return vector of same length as the schema with has
-	//true where the name is contained in the passed vector
 	bool found;
 	for (const type_name_pair& pair : f_schema) {
 		found = false;

@@ -7,6 +7,11 @@
 
 class Record;
 
+/**
+ * @brief The structure is responsible for converting a given query
+ * into a list of records, which satisfy it. 
+ * @note Accepts only 'AND' and 'OR' operations
+ */
 class BinaryQueryTree {
 
 	const std::string AND = "AND";
@@ -45,6 +50,15 @@ private:
 	const Statement	createStatement(const std::string& query);
 };
 
+/**
+ * @details The leafs represent simple statements every
+ *	other node is either 'AND' or 'OR' and its value is
+ *	return is dependent on its children if one of 'AND'
+ *	or 'OR' is found the recursion continues building
+ *	until a simple statement is found. The tree values 
+ *	'AND' nodes more than 'OR' ones. If the query consists 
+ *  only similar nodes, the tree will be flattened to a list. 
+*/
 inline BinaryQueryTree::BinaryQueryTree(Table* table_ptr, const std::string& query)
 	:table(table_ptr), root(nullptr)
 {
@@ -56,16 +70,23 @@ inline BinaryQueryTree::~BinaryQueryTree()
 	removeRecursive(root);
 }
 
-inline void BinaryQueryTree::init(const std::string& query)
-{
-	if (!query.empty()) initRecursive(root, query);
-}
-
+/**
+ * @brief Traverses the tree, returning the resulting records
+ * from the table.
+ * @details Traversing the tree [root - left - right]
+ *	building the return of the query from the bottom up, 
+ *  crossing or unifying the list depending on the operator.
+ */
 inline list_record BinaryQueryTree::search() 
 {
 	if (!root) return table->table();
 
 	return searchRecursive(root);
+}
+
+inline void BinaryQueryTree::init(const std::string& query)
+{
+	if (!query.empty()) initRecursive(root, query);
 }
 
 inline void BinaryQueryTree::removeRecursive(Node*& root)
@@ -81,15 +102,6 @@ inline void BinaryQueryTree::removeRecursive(Node*& root)
 
 inline void BinaryQueryTree::initRecursive(Node*& root, const std::string& query)
 {
-	//the leafs represent simple statements
-	//every other node is either 'and' or 'or'
-	//and its value is return is dependent on
-	//its children
-
-	//if one of 'and' or 'or' is found
-	//the recursion continues building
-	//until a simple statement is found
-
 	std::string leftSub, rightSub;
 	if (findMatch(query, "\\b(" + AND +")\\b") != "") {
 		root = new Node(AND, nullptr);
@@ -117,11 +129,6 @@ inline void BinaryQueryTree::initRecursive(Node*& root, const std::string& query
 
 inline list_record BinaryQueryTree::searchRecursive(Node* root)
 {
-	//traversing the tree [root - left - right]
-	//building the return of the query
-	//from the bottom up, crossing or unifying
-	//the list depending on the operator
-
 	if (root->type == "statement")
 		return table->search(*root->statement);
 

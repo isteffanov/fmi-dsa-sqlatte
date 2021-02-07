@@ -7,6 +7,13 @@
 #include "Table.hpp"
 #include "helper.hpp"
 
+/**
+ * @brief This class has all the responsibility for 
+ * managing the files and successfully executing 
+ * the user's commands.
+ * @details All the files for the database are being saved in
+ *  database/ folder, which the user has to create themselves.
+ */
 class DataBase
 {
 	static const std::string DB_RELATIVE_PATH;

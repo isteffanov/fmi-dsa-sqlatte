@@ -1,3 +1,8 @@
+/**
+ *	@file helper.hpp
+ *	@brief Helper methods used across the project.
+ */
+
 #pragma once
 #include <forward_list>
 #include <iterator>
@@ -14,6 +19,11 @@ typedef  std::forward_list<Table*>::iterator list_tableptr_it;
 typedef  std::forward_list<Record>::iterator list_record_it;
 typedef std::vector<std::string> table_row;
 
+/**
+ * @brief Holds a statement, i.e a >= b
+ * @details The structure is used in BinaryTreeNode mainly, whose nodes hold a pointer to it, which are only referenced
+ *	when the node is a leaf. 
+ */
 struct Statement {
 	std::string lhs;
 	std::string rhs;
@@ -24,58 +34,46 @@ struct Statement {
 		:lhs(_lhs), op(_op), rhs(_rhs) {}
 };
 
+/**
+ * @ brief
+ * @ param 	The function accepts two strings - a string to search from and a regex string.
+ * @ return The first match from the regex_search
+ */
 std::string					findMatch(const std::string& str, const std::string& expr);
+/**
+ * @ brief
+ * @ param 	The function accepts two strings - a string to search from and a regex string.
+ * @ return A vector with all matches from the regex_search except the empty strings.
+ */
 std::vector<std::string>	findMatches(const std::string& str, const std::string& expr);
 
-//write string to file
+/**
+ * @ details A string is writen to a file by first writing its length, and then the string
+ *	itself.
+ */
 std::ofstream&				write_string(std::ofstream& out, const std::string& str);
 std::fstream&				write_string(std::fstream& out, const std::string& str);
 
-//read string from file
+/**
+ * @ details A string is read the same way it is being writen - first its length and then the 
+ *	consecutive characters.
+ */
 std::ifstream&				read_string(std::ifstream& in, std::string& str);
 std::fstream&				read_string(std::fstream& in, std::string& str);
 
-//write vector of strings to file
+/**
+ * @details A vector of strings is writen to a file by first writing its length and then
+ *	writing the strings in it.
+ */
 void						write_vector(std::ofstream& out, const std::vector<std::string>& vec);
 void						write_vector(std::fstream& out, const std::vector<std::string>& vec);
 
-//read vector of strings from file
+/**
+ * @details A vector of strings is read from a file the same way it is being written - first its
+ * length and then the strings in it
+ */
 void						read_vector(std::ifstream& in, std::vector<std::string>& vec);
 void						read_vector(std::fstream& in, std::vector<std::string>& vec);
-
-template<class T>
-void write_list(std::fstream& out, const std::forward_list<T>& list) {
-	for (const T& el : list)
-		out << el;
-}
-
-template<class T>
-void write_list(std::ofstream& out, const std::forward_list<T>& list) {
-	for (const T& el : list)
-		out << el;
-}
-
-template<class T>
-void read_list(std::fstream& in, std::forward_list<T>& list) {
-
-	if (in.good()) {
-		T cur;
-		while (in >> cur) {
-			list.psuh_front(cur);
-		}
-	}
-}
-
-template<class T>
-void read_list(std::ifstream& in, std::forward_list<T>& list) {
-
-	if (in.good()) {
-		T cur;
-		while (in >> cur) {
-			list.push_front(cur);
-		}
-	}
-}
 
 template<class T>
 bool isPresent(const std::forward_list<T>& list, const T& cmp)
@@ -86,6 +84,10 @@ bool isPresent(const std::forward_list<T>& list, const T& cmp)
 	return false;
 }
 
+/**
+ * @details Time complexity: O(N^2)
+ * @return The crosssection of two forward lists. 
+ */
 template<class T>
 std::forward_list<T> intersect(std::forward_list<T>& lhs, const std::forward_list<T>& rhs)
 {
@@ -98,6 +100,10 @@ std::forward_list<T> intersect(std::forward_list<T>& lhs, const std::forward_lis
 	return rtrn;
 }
 
+/**
+ * @details Time complexity: O(N^2)
+ * @return The union of two forward lists.
+ */
 template<class T>
 std::forward_list<T> unify(std::forward_list<T>& lhs, const std::forward_list<T>& rhs)
 {
@@ -109,6 +115,10 @@ std::forward_list<T> unify(std::forward_list<T>& lhs, const std::forward_list<T>
 	return rtrn;
 }
 
+/**
+ * @details Appends the elements from the second list to the first list, erasing them in the process.
+ *	Time complexity: O(N) where N is the length of the second list. 
+ */
 template<class T>
 void append(std::forward_list<T>& to, std::forward_list<T>& what)
 {

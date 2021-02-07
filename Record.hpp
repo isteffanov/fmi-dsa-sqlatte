@@ -8,12 +8,22 @@
 #include "Date.hpp"
 #include "helper.hpp"
 
+
+/**
+ * @brief The class represents a single entry in the database.
+ * @details That entry is represented as a vector of strings.
+ */
 class Record
 {
 	std::vector<std::string> row;
 
 public:
-	//used for sorting
+
+	/**
+	 * @details The class compares two Record objects based on order, specific element and
+	 *	whether or not that element is a Date. It is used in the search queries when the user wants the
+	 *	output to be sorted.
+	 */
 	class Compare {
 		size_t pos;
 		bool isDate;

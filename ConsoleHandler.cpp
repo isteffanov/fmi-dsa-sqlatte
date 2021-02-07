@@ -12,25 +12,29 @@ ConsoleHandler::~ConsoleHandler()
 
 void ConsoleHandler::begin()
 {
+	std::string command;
 	do {
 		std::cout << "SQLatte> ";
 		std::cin >> command;
 
 		tolower(command);
 
-		if      (command == "create_table")	create_table();
-		else if (command == "drop_table")	drop_table();
-		else if (command == "list_tables")	list_tables();
-		else if (command == "table_info")	table_info();
+		if      (command == "createtable")	create_table();
+		else if (command == "droptable")	drop_table();
+		else if (command == "listtables")	list_tables();
+		else if (command == "tableinfo")	table_info();
 		else if (command == "insert")	insert();
 		else if (command == "remove")	remove();
 		else if (command == "select") 	select();
 
 	} while (command != "quit");
 
+	std::cout << "Goodbye, Master! :(";
 }
 
-
+/**
+ * @details The accepted format is: CREATETABLE <table name> (<name1>:<type1>, <name2>:<type2>, ...)
+ */
 void ConsoleHandler::create_table()
 {
 	if (!createTableHelper()) {
@@ -38,6 +42,11 @@ void ConsoleHandler::create_table()
 		std::cin.clear();
 	}
 }
+
+/**
+ * @details The accepted format is: DROPTABLE <table name>.
+ * @note Prompts the user for confirmation.
+ */
 
 void ConsoleHandler::drop_table()
 {
@@ -66,11 +75,17 @@ void ConsoleHandler::drop_table()
 	} while (true);
 }
 
+/**
+ * @details The command does not require additional parameters
+ */
 void ConsoleHandler::list_tables() const
 { 
 	db->list();
 }
 
+/**
+ * @details The accepted format is: LISTTABLES <table name>.
+ */
 void ConsoleHandler::table_info() const
 {
 	std::string table;
@@ -79,12 +94,19 @@ void ConsoleHandler::table_info() const
 	db->info(table);
 }
 
+/**
+ * @details The accepted format is: INSERT INTO <table name>
+ * {(entry1_param1, entry1_param2, ... ), (entry2_param1, entry2_param2, ...), ...}
+ */
 void ConsoleHandler::insert()
 {
 	if (!(insertIntoHelper())) 
 		std::cerr << "Wrong format!" << std::endl;
 }
 
+/**
+ * @details The accepted format is: REMOVE FROM <table name> WHERE <query>
+ */
 void ConsoleHandler::remove()
 {
 	if (!removeHelper()) {
@@ -93,6 +115,11 @@ void ConsoleHandler::remove()
 	}
 }
 
+/**
+ * @details The accepted format is: SELECT [DISTINCT] <column_name1, column_name2, ...|*> 
+ *  FROM <table name> [WHERE <query>] [ORDER BY <column_name> [asc|desc]]
+ * @note '*' means all columns
+ */
 void ConsoleHandler::select()
 {
 	if (!selectHelper()) {
@@ -139,7 +166,7 @@ bool ConsoleHandler::insertIntoHelper()
 	std::getline(std::cin, line);
 
 	std::string table = findMatch(line, "^\\s*into\\s+(\\w+)");
-	line = findMatch(line, "\\{(.*?)\\}");
+	line = findMatch(line, "\\{(.*?)\\}"); //escape {}
 	list_record rows;
 
 	table_row entries = findMatches(line, "\\(([\\w\\s/,]+)\\)");
@@ -225,6 +252,11 @@ bool ConsoleHandler::selectHelper()
 
 	db->select(table, query, cols, isDistinct, byWhat, asc);
 }
+
+/**
+ * @param line is a string to be validated
+ * @param expr is a regex string, used to validation
+ */
 
 bool ConsoleHandler::assert_input(const std::string& line, const std::string& expr)
 {

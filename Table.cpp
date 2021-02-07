@@ -9,6 +9,24 @@ Table::Table(std::string _name, Schema _schema)
 Table::Table(std::string _name, table_row names, table_row types)
 	: f_last_file_pos(0), f_name(_name), f_schema(Schema(names, types)) {}
 
+const list_record& Table::table() const
+{
+	return f_table;
+}
+
+const std::string& Table::name() const
+{
+	return f_name;
+}
+
+const Schema& Table::schema() const
+{
+	return f_schema;
+}
+
+/**
+ * @brief Sets the index of the table's file back to 0.
+ */
 void Table::reset()
 {
 	f_last_file_pos = 0;
@@ -17,11 +35,6 @@ void Table::reset()
 void Table::clear()
 {
 	f_table.clear();
-}
-
-const Schema& Table::schema() const
-{
-	return f_schema;
 }
 
 void Table::info(const size_t count, const uint64_t size) const
@@ -46,10 +59,10 @@ void Table::insert(const table_row& row)
 	f_table.push_front(rec);
 }
 
-const list_record& Table::table() const
-{
-	return f_table;
-}
+/**
+ * @return std::forward_list of records, 
+ *	which satisfy the given statement
+ */
 
 list_record Table::search(const Statement& st) const
 {
@@ -72,10 +85,9 @@ list_record Table::search(const Statement& st) const
 	return rtrn;
 }
 
-const std::string& Table::name() const
-{
-	return f_name;
-}
+/**
+ * @return true if the record suits the table's schema
+ */
 
 bool Table::validate(const Record& rec)
 {
@@ -93,6 +105,15 @@ bool Table::validate(const Record& rec)
 	return true;
 }
 
+/**
+ * @details As we cannot read every one of them
+ * because the memory may deplete, we read atmost maxReturn
+ * number of Records. The position in the file is saved, and
+ * the next reading will begin from there. After successfuly 
+ * reading the whole file .reset() should be used.
+ * @param maxReturn is the maximum number of records that 
+ * shall be returned.
+ */
 bool Table::readChunk(std::ifstream& in, const int maxReturn)
 {
 	Record cur;
@@ -114,7 +135,8 @@ bool Table::readChunk(std::ifstream& in, const int maxReturn)
 
 std::ofstream& operator<<(std::ofstream& out, const Table*& table)
 {
-	write_list(out, table->f_table);
+	for (const Record& el : table->f_table)
+		out << el;
 
 	return out;
 }
